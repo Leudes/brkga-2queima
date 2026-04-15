@@ -1,0 +1,9 @@
+#!/bin/bash
+INSTANCE=$4
+
+# O comando shift 4 joga fora apenas os 4 primeiros argumentos (metadados do irace), 
+# deixando os parâmetros do seu BRKGA intocados na variável $@
+shift 4 
+
+# Executa o seu código. O irace vai ler o número que sair daqui.
+./2queima $INSTANCE "$@"

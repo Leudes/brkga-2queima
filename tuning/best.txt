@@ -1,0 +1,2 @@
+ .ID.   p     pe     pm   rhoe MAXT K MAX_GENS X_NUMBER MAX_STAGT X_INTVL
+1    1 383 0.2401 0.2271 0.8214    8 2      527        2       479      73
