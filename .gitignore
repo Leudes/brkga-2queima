@@ -1,0 +1,9 @@
+# Objetos de compilação
+*.o
+
+# Binários/Executáveis (baseado no seu terminal)
+2queima
+2queimaV2
+
+# Pastas de build ou temporários
+.vscode/
