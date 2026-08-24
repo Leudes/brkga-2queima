@@ -12,7 +12,7 @@
 
 class Graph {
 private:
-    std::unordered_map<size_t, std::vector<size_t>> adjList;
+    std::vector<std::vector<size_t>> adjList;
     
 public:	
     Graph() = default;

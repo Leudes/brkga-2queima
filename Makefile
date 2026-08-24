@@ -1,6 +1,6 @@
 # Compilador e flags
 CXX = g++
-CXXFLAGS = -O3 -std=c++17 -Wall -Wextra
+CXXFLAGS = -O3 -std=c++17 -fopenmp -march=native -mtune=native -Wall -Wextra
 
 # Nomes dos executáveis
 TARGET1 = 2queima
@@ -27,7 +27,6 @@ $(TARGET2): $(OBJS2)
 	$(CXX) $(CXXFLAGS) -o $(TARGET2) $(OBJS2)
 
 # Regra genérica para compilar qualquer .cpp em .o
-# O Makefile cuida de achar brkga-2queimaV2.cpp e transformar em .o
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
