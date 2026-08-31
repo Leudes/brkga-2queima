@@ -64,14 +64,14 @@ int main(int argc, char *argv[]) {
               << "\n";
 #endif
 
-    Decoder2Queima decoder(g);
+    Decodificador2Queima decodificador(g);
 
     const long unsigned rngSeed = trial;
     MTRand rng(rngSeed);
 
-    BRKGA<Decoder2Queima, MTRand> algorithm(
+    BRKGA<Decodificador2Queima, MTRand> algorithm(
         parameters.n, parameters.p, parameters.pe, parameters.pm,
-        parameters.rhoe, decoder, rng, parameters.K, parameters.MAXT);
+        parameters.rhoe, decodificador, rng, parameters.K, parameters.MAXT);
 
 #if DEBUG
     std::cout << "Running for " << parameters.MAX_GENS << " generations..."
@@ -108,8 +108,9 @@ int main(int argc, char *argv[]) {
     auto elapsed_time =
         std::chrono::duration_cast<std::chrono::microseconds>(end - begin);
 
-    std::vector<double> best_chromosome = algorithm.getBestChromosome();
-    std::vector<int> best_sequence = decoder.get_burn_sequence(best_chromosome);
+    std::vector<double> melhor_cromossomo = algorithm.getBestChromosome();
+    std::vector<int> melhor_sequencia =
+        decodificador.obter_sequencia_queima(melhor_cromossomo);
 
     std::filesystem::path input_path(parameters.file_path);
     Result result;
@@ -119,7 +120,7 @@ int main(int argc, char *argv[]) {
     result.fitness = algorithm.getBestFitness();
     result.elapsed_time = elapsed_time.count();
     result.graph_density = g.getDensity();
-    result.best_sequence = best_sequence;
+    result.best_sequence = melhor_sequencia;
 
 #if DEBUG
     std::cout << "\nResult of the trial " << trial << ":\n";

@@ -1,10 +1,11 @@
-#ifndef DECODER_2QUEIMA_H
-#define DECODER_2QUEIMA_H
+#ifndef DECODER_2QUEIMA_V4_H
+#define DECODER_2QUEIMA_V4_H
 
 #include "Graph.h"
 #include <vector>
 
-// V1: usa apenas os vertices selecionados pelas chaves do cromossomo.
+// V4: quando a propagacao vai parar, prioriza a queima direta que faz mais
+// vertices atingirem imediatamente o limiar de dois vizinhos queimados.
 class Decodificador2Queima {
 public:
     explicit Decodificador2Queima(const Graph& grafo_recebido)

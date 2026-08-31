@@ -1,4 +1,4 @@
-#include "Decoder2QueimaV2.h"
+#include "Decoder2QueimaV4.h"
 #include "Graph.h"
 #include "brkgaAPI/BRKGA.h"
 #include "brkgaAPI/MTRand.h"
@@ -15,7 +15,7 @@
 
 struct AlgorithmParameters {
   std::string file_path;
-  std::string output_file = "results2.csv";
+  std::string output_file = "results4.csv";
 
   unsigned n = 10;
   unsigned p = 383;

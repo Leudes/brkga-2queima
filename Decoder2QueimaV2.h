@@ -1,24 +1,23 @@
-#ifndef DECODER_2QUEIMA_H
-#define DECODER_2QUEIMA_H
+#ifndef DECODER_2QUEIMA_V2_H
+#define DECODER_2QUEIMA_V2_H
 
-#include <vector>
-#include <numeric>   // Necessário para o std::iota
-#include <algorithm>
 #include "Graph.h"
+#include <vector>
 
-class Decoder2Queima {
+// V2: usa as chaves do cromossomo e completa uma sequencia insuficiente com
+// os vertices de maior grau original.
+class Decodificador2Queima {
 public:
-	// Alteramos o construtor para inicializar a lista pré-ordenada
-	Decoder2Queima(const Graph& graph);	
-	~Decoder2Queima() = default;	        
-    
-    double decode(const std::vector< double >& chromosome) const;
-    std::vector<int> get_burn_sequence(const std::vector< double >& chromosome) const;
+    explicit Decodificador2Queima(const Graph& grafo_recebido);
+    ~Decodificador2Queima() = default;
+
+    double decode(const std::vector<double>& cromossomo) const;
+    std::vector<int> obter_sequencia_queima(
+        const std::vector<double>& cromossomo) const;
 
 private:
-	const Graph& g;
-    // NOVA LISTA: Guarda os vértices ordenados do maior para o menor grau
-    std::vector<int> vertices_sorted_by_degree; 
+    const Graph& grafo;
+    std::vector<int> vertices_ordenados_por_grau;
 };
 
 #endif

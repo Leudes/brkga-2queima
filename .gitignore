@@ -1,9 +1,21 @@
 # Objetos de compilação
 *.o
+*.d
 
 # Binários/Executáveis (baseado no seu terminal)
 2queima
 2queimaV2
+2queimaV3
+2queimaV4
 
 # Pastas de build ou temporários
 .vscode/
+__pycache__/
+*.pyc
+
+# Bases brutas e tratadas geradas pelo coletor (reproduziveis e volumosas)
+graph_dataset/
+
+# Documentação e relatórios explicativos mantidos apenas localmente
+docs/
+benchmark/results/**/*.md

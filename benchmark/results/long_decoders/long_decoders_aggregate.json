@@ -1,0 +1,45 @@
+{
+  "trials_per_instance": 30,
+  "parameters": {
+    "p": "100",
+    "pe": "0.20",
+    "pm": "0.10",
+    "rhoe": "0.70",
+    "K": "2",
+    "MAXT": "2",
+    "X_INTVL": "25",
+    "X_NUMBER": "2",
+    "MAX_GENS": "500",
+    "MAX_STAGT": "150"
+  },
+  "aggregate": [
+    {
+      "version": "V1_cromossomo",
+      "fitness_mean_across_instances": 31.076666666666664,
+      "mean_gap_to_best_percent": 2.9059440617118217,
+      "time_ms_mean": 343.9385066666667,
+      "wins_or_ties": 2
+    },
+    {
+      "version": "V2_grau_estatico",
+      "fitness_mean_across_instances": 30.93,
+      "mean_gap_to_best_percent": 2.54557240861224,
+      "time_ms_mean": 339.70812333333333,
+      "wins_or_ties": 2
+    },
+    {
+      "version": "V3_grau_relativo",
+      "fitness_mean_across_instances": 31.243333333333332,
+      "mean_gap_to_best_percent": 9.970094647731925,
+      "time_ms_mean": 566.7732566666667,
+      "wins_or_ties": 3
+    },
+    {
+      "version": "V4_gatilho",
+      "fitness_mean_across_instances": 29.46333333333333,
+      "mean_gap_to_best_percent": 0.0,
+      "time_ms_mean": 411.75192333333337,
+      "wins_or_ties": 10
+    }
+  ]
+}

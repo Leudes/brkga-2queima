@@ -1,276 +1,135 @@
 #include "Decoder2QueimaV2.h"
+#include "SimulacaoQueima.h"
+
 #include <algorithm>
-#include <cstdint>
 #include <numeric>
 
 namespace {
-    struct ThreadBuffers {
-        std::vector<int> direct_burn;
-        std::vector<uint8_t> burned;
-        std::vector<int> burned_neighbors_count;
-        std::vector<int> spread_queue;
-        std::vector<int> next_spread_queue;
-    };
-    thread_local ThreadBuffers tls_buffers;
+
+struct MemoriaAuxiliar {
+    EstadoQueima estado;
+    std::vector<int> ordem_cromossomo;
+};
+
+// Cada thread possui sua própria memória para que as avaliações paralelas do
+// BRKGA não misturem seus dados.
+thread_local MemoriaAuxiliar memoria;
+
+int proximo_vertice_de_reparo(
+    const std::vector<int>& vertices_por_grau,
+    const std::vector<uint8_t>& queimado,
+    size_t& proxima_posicao) {
+
+    while (proxima_posicao < vertices_por_grau.size() &&
+           queimado[vertices_por_grau[proxima_posicao]]) {
+        proxima_posicao++;
+    }
+
+    if (proxima_posicao == vertices_por_grau.size()) {
+        return -1;
+    }
+
+    int escolhido = vertices_por_grau[proxima_posicao];
+    proxima_posicao++;
+    return escolhido;
 }
 
-Decoder2Queima::Decoder2Queima(const Graph& graph) : g{graph} {
-    int n = g.getOrder();
-    vertices_sorted_by_degree.resize(n);
-    
-    std::iota(vertices_sorted_by_degree.begin(), vertices_sorted_by_degree.end(), 0);
-    
-    std::sort(vertices_sorted_by_degree.begin(), vertices_sorted_by_degree.end(),
-        [&](int a, int b) { 
-            return g.getVertexDegree(a) > g.getVertexDegree(b); 
+double simular(
+    const Graph& grafo,
+    const std::vector<int>& vertices_por_grau,
+    const std::vector<double>& cromossomo,
+    std::vector<int>* sequencia_queima) {
+
+    validar_cromossomo(grafo, cromossomo);
+    memoria.estado.reiniciar(grafo.getOrder());
+
+    preparar_ordem_do_cromossomo(
+        memoria.ordem_cromossomo,
+        cromossomo,
+        grafo.getOrder(),
+        true);
+
+    if (sequencia_queima != nullptr) {
+        sequencia_queima->clear();
+        sequencia_queima->reserve(grafo.getOrder());
+    }
+
+    size_t posicao_cromossomo = 0;
+    size_t posicao_reparo = 0;
+    int rodadas = 0;
+
+    while (!memoria.estado.todos_queimados()) {
+        rodadas++;
+        propagar_fogo(grafo, memoria.estado);
+
+        if (memoria.estado.todos_queimados()) {
+            break;
+        }
+
+        int escolhido = proximo_vertice_nao_queimado(
+            memoria.ordem_cromossomo,
+            posicao_cromossomo,
+            memoria.estado.queimado);
+
+        if (escolhido == -1) {
+            escolhido = proximo_vertice_de_reparo(
+                vertices_por_grau,
+                memoria.estado.queimado,
+                posicao_reparo);
+        }
+
+        if (escolhido == -1) {
+            break;
+        }
+
+        queimar_vertice(grafo, escolhido, memoria.estado);
+
+        if (sequencia_queima != nullptr) {
+            sequencia_queima->push_back(escolhido);
+        }
+
+        terminar_rodada(memoria.estado);
+    }
+
+    return rodadas;
+}
+
+}  // namespace
+
+Decodificador2Queima::Decodificador2Queima(const Graph& grafo_recebido)
+    : grafo{grafo_recebido} {
+    vertices_ordenados_por_grau.resize(grafo.getOrder());
+
+    std::iota(
+        vertices_ordenados_por_grau.begin(),
+        vertices_ordenados_por_grau.end(),
+        0);
+
+    std::sort(
+        vertices_ordenados_por_grau.begin(),
+        vertices_ordenados_por_grau.end(),
+        [&](int primeiro, int segundo) {
+            return grafo.getVertexDegree(primeiro) >
+                grafo.getVertexDegree(segundo);
         });
 }
 
-double Decoder2Queima::decode(const std::vector< double >& chromosome) const {
-    const int n = g.getOrder();
-    auto& bufs = tls_buffers;
-
-    if (bufs.burned.size() != static_cast<size_t>(n)) {
-        bufs.direct_burn.reserve(n);
-        bufs.burned.resize(n);
-        bufs.burned_neighbors_count.resize(n);
-        bufs.spread_queue.reserve(n);
-        bufs.next_spread_queue.reserve(n);
-    }
-
-    bufs.direct_burn.clear();
-    for (int i = 0; i < n; ++i) {
-        if (chromosome[i] >= 0.5) {
-            bufs.direct_burn.push_back(i);
-        }
-    }
-
-    size_t sort_limit = std::min(bufs.direct_burn.size(), static_cast<size_t>(256));
-    std::partial_sort(bufs.direct_burn.begin(), bufs.direct_burn.begin() + sort_limit, bufs.direct_burn.end(),
-        [&](int a, int b) { return chromosome[a] > chromosome[b]; });
-
-    std::fill(bufs.burned.begin(), bufs.burned.end(), 0);
-    std::fill(bufs.burned_neighbors_count.begin(), bufs.burned_neighbors_count.end(), 0);
-    bufs.spread_queue.clear();
-    bufs.next_spread_queue.clear();
-    
-    int total_burned = 0;
-    int rounds = 0;
-    size_t seq_idx = 0;
-    size_t repair_idx = 0;
-
-    while (total_burned < n) {
-        bool changed = false;
-        rounds++;
-
-        if (!bufs.spread_queue.empty()) {
-            for (int v : bufs.spread_queue) {
-                if (!bufs.burned[v]) {
-                    bufs.burned[v] = 1;
-                    total_burned++;
-                    changed = true;
-                    
-                    for (size_t neighbor : g.getNeighbors(v)) {
-                        if (!bufs.burned[neighbor]) {
-                            bufs.burned_neighbors_count[neighbor]++;
-                            if (bufs.burned_neighbors_count[neighbor] == 2) {
-                                bufs.next_spread_queue.push_back(neighbor);
-                            }
-                        }
-                    }
-                }
-            }
-            bufs.spread_queue.clear();
-        }
-
-        if (total_burned == n) break;
-
-        while (seq_idx < bufs.direct_burn.size()) {
-            if (seq_idx >= sort_limit && sort_limit < bufs.direct_burn.size()) {
-                size_t next_limit = std::min(bufs.direct_burn.size(), sort_limit + 256);
-                std::partial_sort(bufs.direct_burn.begin() + sort_limit, bufs.direct_burn.begin() + next_limit, bufs.direct_burn.end(),
-                    [&](int a, int b) { return chromosome[a] > chromosome[b]; });
-                sort_limit = next_limit;
-            }
-
-            int target = bufs.direct_burn[seq_idx++];
-            if (!bufs.burned[target]) {
-                bufs.burned[target] = 1;
-                total_burned++;
-                changed = true;
-
-                for (size_t neighbor : g.getNeighbors(target)) {
-                    if (!bufs.burned[neighbor]) {
-                        bufs.burned_neighbors_count[neighbor]++;
-                        if (bufs.burned_neighbors_count[neighbor] == 2) {
-                            bufs.next_spread_queue.push_back(neighbor);
-                        }
-                    }
-                }
-                break;
-            }
-        }
-
-        std::swap(bufs.spread_queue, bufs.next_spread_queue);
-
-        if (!changed && bufs.spread_queue.empty()) {
-            int best_v = -1;
-
-            while (repair_idx < vertices_sorted_by_degree.size()) {
-                int candidate = vertices_sorted_by_degree[repair_idx];
-                
-                if (!bufs.burned[candidate]) {
-                    best_v = candidate;
-                    break; 
-                }
-                
-                repair_idx++;
-            }
-
-            if (best_v != -1) {
-                bufs.burned[best_v] = 1;
-                total_burned++;
-                changed = true; 
-                
-                for (size_t neighbor : g.getNeighbors(best_v)) {
-                    if (!bufs.burned[neighbor]) {
-                        bufs.burned_neighbors_count[neighbor]++;
-                        if (bufs.burned_neighbors_count[neighbor] == 2) {
-                            bufs.next_spread_queue.push_back(neighbor);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (total_burned < n) {
-        return rounds + (n - total_burned) * 100.0;
-    }
-
-    return rounds;
+double Decodificador2Queima::decode(
+    const std::vector<double>& cromossomo) const {
+    return simular(
+        grafo,
+        vertices_ordenados_por_grau,
+        cromossomo,
+        nullptr);
 }
 
-std::vector<int> Decoder2Queima::get_burn_sequence(const std::vector< double >& chromosome) const {
-    const int n = g.getOrder();
-    auto& bufs = tls_buffers;
-
-    if (bufs.burned.size() != static_cast<size_t>(n)) {
-        bufs.direct_burn.reserve(n);
-        bufs.burned.resize(n);
-        bufs.burned_neighbors_count.resize(n);
-        bufs.spread_queue.reserve(n);
-        bufs.next_spread_queue.reserve(n);
-    }
-
-    bufs.direct_burn.clear();
-    for (int i = 0; i < n; ++i) {
-        if (chromosome[i] >= 0.5) {
-            bufs.direct_burn.push_back(i);
-        }
-    }
-
-    size_t sort_limit = std::min(bufs.direct_burn.size(), static_cast<size_t>(256));
-    std::partial_sort(bufs.direct_burn.begin(), bufs.direct_burn.begin() + sort_limit, bufs.direct_burn.end(),
-        [&](int a, int b) { return chromosome[a] > chromosome[b]; });
-
-    std::fill(bufs.burned.begin(), bufs.burned.end(), 0);
-    std::fill(bufs.burned_neighbors_count.begin(), bufs.burned_neighbors_count.end(), 0);
-    bufs.spread_queue.clear();
-    bufs.next_spread_queue.clear();
-    
-    std::vector<int> sequence; 
-    int total_burned = 0;
-    size_t seq_idx = 0;
-    size_t repair_idx = 0;
-
-    while (total_burned < n) {
-        bool changed = false;
-
-        if (!bufs.spread_queue.empty()) {
-            for (int v : bufs.spread_queue) {
-                if (!bufs.burned[v]) {
-                    bufs.burned[v] = 1;
-                    total_burned++;
-                    changed = true;
-                    
-                    for (size_t neighbor : g.getNeighbors(v)) {
-                        if (!bufs.burned[neighbor]) {
-                            bufs.burned_neighbors_count[neighbor]++;
-                            if (bufs.burned_neighbors_count[neighbor] == 2) {
-                                bufs.next_spread_queue.push_back(neighbor);
-                            }
-                        }
-                    }
-                }
-            }
-            bufs.spread_queue.clear();
-        }
-
-        if (total_burned == n) break;
-
-        while (seq_idx < bufs.direct_burn.size()) {
-            if (seq_idx >= sort_limit && sort_limit < bufs.direct_burn.size()) {
-                size_t next_limit = std::min(bufs.direct_burn.size(), sort_limit + 256);
-                std::partial_sort(bufs.direct_burn.begin() + sort_limit, bufs.direct_burn.begin() + next_limit, bufs.direct_burn.end(),
-                    [&](int a, int b) { return chromosome[a] > chromosome[b]; });
-                sort_limit = next_limit;
-            }
-
-            int target = bufs.direct_burn[seq_idx++];
-            if (!bufs.burned[target]) {
-                bufs.burned[target] = 1;
-                total_burned++;
-                changed = true;
-                
-                sequence.push_back(target); 
-
-                for (size_t neighbor : g.getNeighbors(target)) {
-                    if (!bufs.burned[neighbor]) {
-                        bufs.burned_neighbors_count[neighbor]++;
-                        if (bufs.burned_neighbors_count[neighbor] == 2) {
-                            bufs.next_spread_queue.push_back(neighbor);
-                        }
-                    }
-                }
-                break;
-            }
-        }
-
-        std::swap(bufs.spread_queue, bufs.next_spread_queue);
-
-        if (!changed && bufs.spread_queue.empty()) {
-            int best_v = -1;
-
-            while (repair_idx < vertices_sorted_by_degree.size()) {
-                int candidate = vertices_sorted_by_degree[repair_idx];
-                
-                if (!bufs.burned[candidate]) {
-                    best_v = candidate;
-                    break; 
-                }
-                
-                repair_idx++;
-            }
-
-            if (best_v != -1) {
-                bufs.burned[best_v] = 1;
-                total_burned++;
-                changed = true; 
-
-                sequence.push_back(best_v); 
-                
-                for (size_t neighbor : g.getNeighbors(best_v)) {
-                    if (!bufs.burned[neighbor]) {
-                        bufs.burned_neighbors_count[neighbor]++;
-                        if (bufs.burned_neighbors_count[neighbor] == 2) {
-                            bufs.next_spread_queue.push_back(neighbor);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return sequence;
+std::vector<int> Decodificador2Queima::obter_sequencia_queima(
+    const std::vector<double>& cromossomo) const {
+    std::vector<int> sequencia;
+    simular(
+        grafo,
+        vertices_ordenados_por_grau,
+        cromossomo,
+        &sequencia);
+    return sequencia;
 }
