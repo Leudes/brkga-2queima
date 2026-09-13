@@ -4,8 +4,8 @@
 #include "Graph.h"
 #include <vector>
 
-// V4: quando a propagacao vai parar, prioriza a queima direta que faz mais
-// vertices atingirem imediatamente o limiar de dois vizinhos queimados.
+// V4: usa primeiro os vertices com chave maior ou igual a 0,5. A heuristica
+// de gatilho somente repara a solucao quando essas fontes acabam.
 class Decodificador2Queima {
 public:
     explicit Decodificador2Queima(const Graph& grafo_recebido)

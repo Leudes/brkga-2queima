@@ -5,7 +5,8 @@ namespace {
 
 struct MemoriaAuxiliar {
     EstadoQueima estado;
-    std::vector<int> ordem_cromossomo;
+    std::vector<int> fontes_do_cromossomo;
+    std::vector<int> ordem_para_reparo;
     std::vector<int> vertices_com_um_queimado;
     std::vector<int> fronteira_filtrada;
     std::vector<int> quantidade_gatilhos;
@@ -19,10 +20,23 @@ struct MemoriaAuxiliar {
         estado.reiniciar(numero_vertices);
 
         preparar_ordem_do_cromossomo(
-            ordem_cromossomo,
+            ordem_para_reparo,
             cromossomo,
             numero_vertices,
             false);
+
+        // A lista completa ja esta em ordem decrescente. Portanto, as chaves
+        // maiores ou iguais a 0,5 formam o inicio dessa lista.
+        fontes_do_cromossomo.clear();
+        fontes_do_cromossomo.reserve(numero_vertices);
+
+        for (int vertice : ordem_para_reparo) {
+            if (cromossomo[vertice] < 0.5) {
+                break;
+            }
+
+            fontes_do_cromossomo.push_back(vertice);
+        }
 
         vertices_com_um_queimado.clear();
         fronteira_filtrada.clear();
@@ -42,7 +56,7 @@ struct MemoriaAuxiliar {
 // BRKGA não misturem seus dados.
 thread_local MemoriaAuxiliar memoria;
 
-int escolher_vertice_de_gatilho(
+int escolher_reparo_por_gatilho(
     const Graph& grafo,
     const std::vector<double>& cromossomo) {
 
@@ -110,7 +124,8 @@ double simular(
         sequencia_queima->reserve(grafo.getOrder());
     }
 
-    size_t proxima_posicao = 0;
+    size_t posicao_cromossomo = 0;
+    size_t posicao_reparo = 0;
     int rodadas = 0;
 
     while (!memoria.estado.todos_queimados()) {
@@ -125,14 +140,23 @@ double simular(
             break;
         }
 
-        int escolhido = escolher_vertice_de_gatilho(
-            grafo,
-            cromossomo);
+        int escolhido = proximo_vertice_nao_queimado(
+            memoria.fontes_do_cromossomo,
+            posicao_cromossomo,
+            memoria.estado.queimado);
 
         if (escolhido == -1) {
+            escolhido = escolher_reparo_por_gatilho(
+                grafo,
+                cromossomo);
+        }
+
+        // Se nao houver gatilho aplicavel, usa a maior chave nao queimada
+        // para que o reparo sempre produza uma solucao completa.
+        if (escolhido == -1) {
             escolhido = proximo_vertice_nao_queimado(
-                memoria.ordem_cromossomo,
-                proxima_posicao,
+                memoria.ordem_para_reparo,
+                posicao_reparo,
                 memoria.estado.queimado);
         }
 

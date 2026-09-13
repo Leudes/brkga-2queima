@@ -4,9 +4,8 @@
 #include "Graph.h"
 #include <vector>
 
-// Decoder de grau relativo: em cada rodada, a queima direta prioriza o
-// vertice com mais vizinhos ainda nao queimados. A chave aleatoria do BRKGA
-// desempata vertices com o mesmo grau relativo.
+// V3: usa primeiro os vertices com chave maior ou igual a 0,5. O grau
+// relativo somente repara a solucao quando essas fontes acabam.
 class Decodificador2Queima {
 public:
     explicit Decodificador2Queima(const Graph& grafo_recebido)

@@ -5,18 +5,30 @@ namespace {
 
 struct MemoriaAuxiliar {
     EstadoQueima estado;
+    std::vector<int> ordem_cromossomo;
     std::vector<int> grau_relativo;
     std::vector<int> vertices_nao_queimados;
     std::vector<int> posicao_na_lista;
 
-    void reiniciar(const Graph& grafo) {
-        estado.reiniciar(grafo.getOrder());
-        grau_relativo.resize(grafo.getOrder());
-        vertices_nao_queimados.resize(grafo.getOrder());
-        posicao_na_lista.resize(grafo.getOrder());
+    void reiniciar(
+        const Graph& grafo,
+        const std::vector<double>& cromossomo) {
+
+        size_t numero_vertices = grafo.getOrder();
+        estado.reiniciar(numero_vertices);
+
+        preparar_ordem_do_cromossomo(
+            ordem_cromossomo,
+            cromossomo,
+            numero_vertices,
+            true);
+
+        grau_relativo.resize(numero_vertices);
+        vertices_nao_queimados.resize(numero_vertices);
+        posicao_na_lista.resize(numero_vertices);
 
         for (size_t vertice = 0;
-             vertice < grafo.getOrder();
+             vertice < numero_vertices;
              vertice++) {
             grau_relativo[vertice] = static_cast<int>(
                 grafo.getVertexDegree(vertice));
@@ -78,7 +90,7 @@ void propagar_e_atualizar_grau(const Graph& grafo) {
     memoria.estado.fila_propagacao_atual.clear();
 }
 
-int escolher_por_grau_relativo(
+int escolher_reparo_por_grau_relativo(
     const std::vector<double>& cromossomo) {
 
     int escolhido = -1;
@@ -104,13 +116,14 @@ double simular(
     std::vector<int>* sequencia_queima) {
 
     validar_cromossomo(grafo, cromossomo);
-    memoria.reiniciar(grafo);
+    memoria.reiniciar(grafo, cromossomo);
 
     if (sequencia_queima != nullptr) {
         sequencia_queima->clear();
         sequencia_queima->reserve(grafo.getOrder());
     }
 
+    size_t proxima_posicao = 0;
     int rodadas = 0;
 
     while (!memoria.estado.todos_queimados()) {
@@ -122,7 +135,14 @@ double simular(
             break;
         }
 
-        int escolhido = escolher_por_grau_relativo(cromossomo);
+        int escolhido = proximo_vertice_nao_queimado(
+            memoria.ordem_cromossomo,
+            proxima_posicao,
+            memoria.estado.queimado);
+
+        if (escolhido == -1) {
+            escolhido = escolher_reparo_por_grau_relativo(cromossomo);
+        }
 
         if (escolhido == -1) {
             break;

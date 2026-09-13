@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Benchmark reproduzivel dos quatro decodificadores da 2-queima."""
+"""Benchmark reproduzivel dos decodificadores da 2-queima."""
 
 from __future__ import annotations
 
@@ -19,9 +19,16 @@ ROOT = Path(__file__).resolve().parents[1]
 VERSIONS = {
     "V1_cromossomo": ROOT / "2queima",
     "V2_grau_estatico": ROOT / "2queimaV2",
-    "V3_grau_relativo": ROOT / "2queimaV3",
-    "V4_gatilho": ROOT / "2queimaV4",
+    "V3_reparo_grau_relativo": ROOT / "2queimaV3",
+    "V4_reparo_gatilho": ROOT / "2queimaV4",
 }
+
+DEFAULT_VERSIONS = [
+    "V1_cromossomo",
+    "V2_grau_estatico",
+    "V3_reparo_grau_relativo",
+    "V4_reparo_gatilho",
+]
 
 INSTANCES = [
     ROOT / "benchmark/base01/cycle1-order25.txt",
@@ -150,8 +157,9 @@ def run_benchmark(
     output_dir: Path,
     parameters: dict[str, str],
     file_prefix: str,
+    versions: dict[str, Path],
 ) -> list[dict[str, object]]:
-    for executable in VERSIONS.values():
+    for executable in versions.values():
         if not executable.is_file():
             raise FileNotFoundError(f"execute make antes do benchmark: {executable}")
     for instance in INSTANCES:
@@ -162,9 +170,9 @@ def run_benchmark(
     graphs = {instance: read_graph(instance) for instance in INSTANCES}
     with tempfile.TemporaryDirectory(prefix="2queima-benchmark-") as directory:
         temporary = Path(directory)
-        total = len(VERSIONS) * len(INSTANCES)
+        total = len(versions) * len(INSTANCES)
         completed = 0
-        for version, executable in VERSIONS.items():
+        for version, executable in versions.items():
             for instance in INSTANCES:
                 result_file = temporary / f"{version}__{instance.stem}.csv"
                 command = [str(executable), str(instance)]
@@ -211,6 +219,7 @@ def summarize(
     trials: int,
     parameters: dict[str, str],
     file_prefix: str,
+    versions: dict[str, Path],
 ) -> None:
     grouped: dict[tuple[str, str], list[dict[str, object]]] = defaultdict(list)
     for row in rows:
@@ -251,7 +260,7 @@ def summarize(
                 wins[str(row["version"])] += 1
 
     aggregates = []
-    for version in VERSIONS:
+    for version in versions:
         values = by_version[version]
         relative_gaps = []
         for row in values:
@@ -282,7 +291,7 @@ def summarize(
     )
 
     report = [
-        "# Benchmark dos quatro decodificadores",
+        f"# Benchmark de {len(versions)} decodificadores",
         "",
         f"Foram executadas {trials} repetições por versão e instância, com sementes "
         f"determinísticas de 0 a {trials - 1}. Todas as versões receberam os mesmos parâmetros.",
@@ -304,8 +313,8 @@ def summarize(
         "",
         "## Fitness médio por instância",
         "",
-        "| Instância | V1 | V2 | V3 | V4 |",
-        "|---|---:|---:|---:|---:|",
+        "| Instância | " + " | ".join(versions) + " |",
+        "|---|" + "---:|" * len(versions),
     ))
     for instance_path in INSTANCES:
         values = {
@@ -314,7 +323,7 @@ def summarize(
         }
         best = min(values.values())
         cells = []
-        for version in VERSIONS:
+        for version in versions:
             formatted = f"{values[version]:.2f}"
             cells.append(f"**{formatted}**" if values[version] == best else formatted)
         report.append(f"| {instance_path.name} | " + " | ".join(cells) + " |")
@@ -337,6 +346,13 @@ def main() -> None:
         "--output", type=Path, default=ROOT / "benchmark/results/quick_decoders"
     )
     parser.add_argument("--prefix", default="quick_decoders")
+    parser.add_argument(
+        "--versions",
+        nargs="+",
+        choices=VERSIONS,
+        default=DEFAULT_VERSIONS,
+        help="versões que participarão do benchmark",
+    )
     parser.add_argument("--p", type=int, default=int(COMMON_PARAMETERS["p"]))
     parser.add_argument(
         "--max-gens", type=int, default=int(COMMON_PARAMETERS["MAX_GENS"])
@@ -367,13 +383,25 @@ def main() -> None:
         "MAX_STAGT": str(args.max_stagt),
     })
 
-    rows = run_benchmark(args.trials, args.output, parameters, args.prefix)
+    selected_versions = {
+        name: VERSIONS[name]
+        for name in args.versions
+    }
+
+    rows = run_benchmark(
+        args.trials,
+        args.output,
+        parameters,
+        args.prefix,
+        selected_versions,
+    )
     summarize(
         rows,
         args.output,
         args.trials,
         parameters,
         args.prefix,
+        selected_versions,
     )
     print(f"Resultados: {args.output}")
 
