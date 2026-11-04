@@ -1,0 +1,4 @@
+configuracao,versao,instancia,vertices,arestas,repeticao,semente,fitness,tempo_algoritmo_s,tempo_total_s,estado
+calibrada,V6,harwell_boeing__jgl011.txt,11,49,0,20261022,3,3.56806,3.618336,ok
+calibrada,V6,harwell_boeing__bcsstm13.txt,649,9949,0,20261022,7,42.6426,42.832342,ok
+calibrada,V6,random__gilbert_n4000_d24_r1.txt,4000,51971,0,20261022,9,261.999,262.826540,ok

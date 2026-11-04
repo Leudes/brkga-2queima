@@ -1,0 +1,79 @@
+#include "Decoder2QueimaV6.h"
+#include "SimulacaoQueima.h"
+
+namespace {
+
+struct MemoriaAuxiliar {
+    EstadoQueima estado;
+    std::vector<int> fila_cromossomo;
+};
+
+// Cada thread reutiliza sua propria memoria durante as avaliacoes do BRKGA.
+thread_local MemoriaAuxiliar memoria;
+
+double simular(
+    const Graph& grafo,
+    const std::vector<double>& cromossomo,
+    std::vector<int>* sequencia_queima) {
+
+    validar_cromossomo(grafo, cromossomo);
+    memoria.estado.reiniciar(grafo.getOrder());
+
+    // O false inclui todos os vertices, inclusive os de chave menor que 0,5.
+    preparar_fila_do_cromossomo(
+        memoria.fila_cromossomo,
+        cromossomo,
+        grafo.getOrder(),
+        false);
+
+    if (sequencia_queima != nullptr) {
+        sequencia_queima->clear();
+        sequencia_queima->reserve(grafo.getOrder());
+    }
+
+    int rodadas = 0;
+
+    while (!memoria.estado.todos_queimados()) {
+        rodadas++;
+        propagar_fogo(grafo, memoria.estado);
+
+        if (memoria.estado.todos_queimados()) {
+            break;
+        }
+
+        int escolhido = proximo_vertice_da_fila(
+            memoria.fila_cromossomo,
+            cromossomo,
+            memoria.estado.queimado);
+
+        // A ordem contem todos os vertices. Portanto, este caso so ocorreria
+        // se o estado da simulacao estivesse inconsistente.
+        if (escolhido == -1) {
+            break;
+        }
+
+        queimar_vertice(grafo, escolhido, memoria.estado);
+
+        if (sequencia_queima != nullptr) {
+            sequencia_queima->push_back(escolhido);
+        }
+
+        terminar_rodada(memoria.estado);
+    }
+
+    return rodadas;
+}
+
+}  // namespace
+
+double Decodificador2Queima::decode(
+    const std::vector<double>& cromossomo) const {
+    return simular(grafo, cromossomo, nullptr);
+}
+
+std::vector<int> Decodificador2Queima::obter_sequencia_queima(
+    const std::vector<double>& cromossomo) const {
+    std::vector<int> sequencia;
+    simular(grafo, cromossomo, &sequencia);
+    return sequencia;
+}

@@ -1,0 +1,6 @@
+arquivo_origem,versao,instancia,vertices,arestas,densidade,repeticao,fitness,tempo_algoritmo_s
+results_v2.csv,V2,delaunay_n10.txt,1024,3056,0.00583456,1,20.0,76.9107
+results_v2.csv,V2,delaunay_n11.txt,2048,6127,0.00292301,1,25.0,173.809
+results_v2.csv,V2,delaunay_n12.txt,4096,12264,0.00146234,1,31.0,410.099
+results_v2.csv,V2,delaunay_n13.txt,8192,24547,0.000731647,1,41.0,1001.96
+results_v2.csv,V2,delaunay_n14.txt,16384,49122,0.00036601,1,52.0,2803.89

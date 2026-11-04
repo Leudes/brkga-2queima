@@ -110,7 +110,9 @@ size_t Graph::getMaxDegree() const {
     return maxDegree;
 }
 
-const std::vector<size_t>& Graph::getNeighbors(size_t vertex) const { return this->adjList.at(vertex); }
+const std::vector<size_t>& Graph::getNeighbors(size_t vertex) const noexcept {
+    return adjList[vertex];
+}
 
 bool Graph::vertexExists(size_t vertex) const { return vertex < adjList.size(); }
 
@@ -177,4 +179,3 @@ size_t Graph::chooseRandomVertex() const {
     std::uniform_int_distribution<size_t> distrib(0, adjList.size() - 1);
     return distrib(gen);
 }
-

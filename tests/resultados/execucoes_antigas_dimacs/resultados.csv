@@ -1,0 +1,7 @@
+arquivo_origem,versao,instancia,vertices,arestas,densidade,repeticao,fitness,tempo_algoritmo_s
+results_dimacs.csv,não identificada,delaunay_n10.txt,1024,3056,0.00583456,1,20.0,143.586
+results_dimacs.csv,não identificada,delaunay_n10.txt,1024,3056,0.00583456,2,20.0,13.0664
+results_dimacs.csv,não identificada,delaunay_n13.txt,8192,24547,0.000731647,1,43.0,104.371
+results_dimacs.csv,não identificada,delaunay_n13.txt,8192,24547,0.000731647,2,43.0,51.0383
+results_dimacs.csv,não identificada,delaunay_n13.txt,8192,24547,0.000731647,3,45.0,9.8624
+results_dimacs.csv,não identificada,delaunay_n16.txt,65536,196575,9.15388e-05,1,96.0,95.8094

@@ -114,8 +114,9 @@ inline void validar_cromossomo(
     }
 }
 
-// Cria a ordem de prioridade dada pelas chaves do cromossomo. V1 e V2 usam
-// apenas chaves maiores ou iguais a 0.5. V4 usa todos os vértices.
+// Cria a ordem de prioridade dada pelas chaves do cromossomo. V1, V2, V3 e
+// V5 selecionam primeiro as chaves maiores ou iguais a 0.5. V4 e V6 tambem
+// precisam considerar os demais vertices.
 inline void preparar_ordem_do_cromossomo(
     std::vector<int>& ordem,
     const std::vector<double>& cromossomo,
@@ -138,6 +139,62 @@ inline void preparar_ordem_do_cromossomo(
         [&](int primeiro, int segundo) {
             return cromossomo[primeiro] > cromossomo[segundo];
         });
+}
+
+// Prepara uma fila de prioridade com as chaves do cromossomo. Diferente da
+// ordenacao completa acima, montar a fila custa O(n). Cada vertice so e
+// retirado quando realmente precisamos de uma nova fonte de queima.
+inline void preparar_fila_do_cromossomo(
+    std::vector<int>& fila,
+    const std::vector<double>& cromossomo,
+    size_t numero_vertices,
+    bool usar_apenas_chaves_selecionadas) {
+
+    fila.clear();
+    fila.reserve(numero_vertices);
+
+    for (size_t vertice = 0; vertice < numero_vertices; ++vertice) {
+        if (!usar_apenas_chaves_selecionadas ||
+            cromossomo[vertice] >= 0.5) {
+            fila.push_back(static_cast<int>(vertice));
+        }
+    }
+
+    auto menor_prioridade = [&](int primeiro, int segundo) {
+        if (cromossomo[primeiro] != cromossomo[segundo]) {
+            return cromossomo[primeiro] < cromossomo[segundo];
+        }
+
+        return primeiro > segundo;
+    };
+
+    std::make_heap(fila.begin(), fila.end(), menor_prioridade);
+}
+
+inline int proximo_vertice_da_fila(
+    std::vector<int>& fila,
+    const std::vector<double>& cromossomo,
+    const std::vector<uint8_t>& queimado) {
+
+    auto menor_prioridade = [&](int primeiro, int segundo) {
+        if (cromossomo[primeiro] != cromossomo[segundo]) {
+            return cromossomo[primeiro] < cromossomo[segundo];
+        }
+
+        return primeiro > segundo;
+    };
+
+    while (!fila.empty()) {
+        std::pop_heap(fila.begin(), fila.end(), menor_prioridade);
+        int vertice = fila.back();
+        fila.pop_back();
+
+        if (!queimado[vertice]) {
+            return vertice;
+        }
+    }
+
+    return -1;
 }
 
 inline int proximo_vertice_nao_queimado(

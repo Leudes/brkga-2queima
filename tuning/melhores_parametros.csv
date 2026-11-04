@@ -1,0 +1,7 @@
+versao,p,pe,pm,rhoe,K,MAXT,X_INTVL,X_NUMBER,MAX_GENS,MAX_STAGT,origem,observacao
+V1,578,0.2788,0.0743,0.6237,2,4,125,2,583,477,irace,
+V2,518,0.2463,0.2171,0.6522,2,4,91,2,651,451,irace,
+V3,572,0.2485,0.1638,0.6334,2,4,86,2,344,102,irace,
+V4,407,0.2899,0.0692,0.6514,2,4,137,2,762,411,irace,Calibrado antes da regra final de gatilho
+V5,554,0.2689,0.2702,0.6252,2,4,37,2,652,486,irace,
+V6,518,0.2463,0.2171,0.6522,2,4,91,2,651,451,V2 provisoria,Ainda nao calibrado pelo irace

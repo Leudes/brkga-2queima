@@ -1,16 +1,40 @@
 #include "Decoder2QueimaV4.h"
 #include "SimulacaoQueima.h"
 
+#include <algorithm>
+
 namespace {
+
+// A fila guarda uma copia da pontuacao no momento em que ela mudou. Copias
+// antigas sao descartadas somente quando chegam ao topo da fila.
+struct EntradaGatilho {
+    int quantidade;
+    double pontuacao;
+    int vertice;
+};
+
+bool menor_prioridade(
+    const EntradaGatilho& primeira,
+    const EntradaGatilho& segunda) {
+
+    if (primeira.pontuacao != segunda.pontuacao) {
+        return primeira.pontuacao < segunda.pontuacao;
+    }
+
+    // O desempate pelo indice deixa o resultado deterministico caso duas
+    // chaves do cromossomo sejam exatamente iguais.
+    return primeira.vertice > segunda.vertice;
+}
 
 struct MemoriaAuxiliar {
     EstadoQueima estado;
     std::vector<int> fontes_do_cromossomo;
     std::vector<int> ordem_para_reparo;
     std::vector<int> vertices_com_um_queimado;
-    std::vector<int> fronteira_filtrada;
+    std::vector<int> candidatos_empatados;
     std::vector<int> quantidade_gatilhos;
-    std::vector<int> candidatos_tocados;
+    std::vector<EntradaGatilho> melhores_gatilhos;
+    bool gatilhos_iniciados = false;
 
     void reiniciar(
         const Graph& grafo,
@@ -25,8 +49,8 @@ struct MemoriaAuxiliar {
             numero_vertices,
             false);
 
-        // A lista completa ja esta em ordem decrescente. Portanto, as chaves
-        // maiores ou iguais a 0,5 formam o inicio dessa lista.
+        // A ordem ja esta decrescente. Portanto, as chaves maiores ou iguais
+        // a 0,5 formam o inicio dessa lista.
         fontes_do_cromossomo.clear();
         fontes_do_cromossomo.reserve(numero_vertices);
 
@@ -38,77 +62,312 @@ struct MemoriaAuxiliar {
             fontes_do_cromossomo.push_back(vertice);
         }
 
+        quantidade_gatilhos.resize(numero_vertices);
         vertices_com_um_queimado.clear();
-        fronteira_filtrada.clear();
-        candidatos_tocados.clear();
-
         vertices_com_um_queimado.reserve(numero_vertices);
-        fronteira_filtrada.reserve(numero_vertices);
-        candidatos_tocados.reserve(numero_vertices);
+        candidatos_empatados.clear();
+        candidatos_empatados.reserve(numero_vertices);
+        melhores_gatilhos.clear();
 
-        if (quantidade_gatilhos.size() != numero_vertices) {
-            quantidade_gatilhos.assign(numero_vertices, 0);
+        if (melhores_gatilhos.capacity() < numero_vertices) {
+            melhores_gatilhos.reserve(numero_vertices);
         }
+
+        gatilhos_iniciados = false;
     }
 };
 
-// Cada thread possui sua própria memória para que as avaliações paralelas do
-// BRKGA não misturem seus dados.
+// Cada thread possui sua propria memoria para que as avaliacoes paralelas do
+// BRKGA nao misturem seus dados.
 thread_local MemoriaAuxiliar memoria;
 
-int escolher_reparo_por_gatilho(
-    const Graph& grafo,
-    const std::vector<double>& cromossomo) {
+void guardar_nova_pontuacao(
+    MemoriaAuxiliar& dados,
+    const std::vector<double>& cromossomo,
+    int vertice) {
 
-    if (!memoria.estado.fila_propagacao_seguinte.empty() ||
-        memoria.vertices_com_um_queimado.empty()) {
-        return -1;
+    int quantidade = dados.quantidade_gatilhos[vertice];
+    if (quantidade <= 0 || dados.estado.queimado[vertice]) {
+        return;
     }
 
-    memoria.fronteira_filtrada.clear();
-    memoria.candidatos_tocados.clear();
+    dados.melhores_gatilhos.push_back({
+        quantidade,
+        quantidade + cromossomo[vertice],
+        vertice});
 
-    for (int vertice : memoria.vertices_com_um_queimado) {
-        if (memoria.estado.queimado[vertice] ||
-            memoria.estado.quantidade_vizinhos_queimados[vertice] != 1) {
+    std::push_heap(
+        dados.melhores_gatilhos.begin(),
+        dados.melhores_gatilhos.end(),
+        menor_prioridade);
+}
+
+// Um vertice com exatamente um vizinho queimado funciona como gatilho para
+// cada um de seus vizinhos ainda nao queimados.
+void alterar_gatilhos_criados_por(
+    MemoriaAuxiliar& dados,
+    const Graph& grafo,
+    const std::vector<double>& cromossomo,
+    int vertice,
+    int alteracao) {
+
+    for (size_t vizinho : grafo.getNeighbors(vertice)) {
+        if (dados.estado.queimado[vizinho]) {
             continue;
         }
 
-        memoria.fronteira_filtrada.push_back(vertice);
+        dados.quantidade_gatilhos[vizinho] += alteracao;
 
-        for (size_t candidato : grafo.getNeighbors(vertice)) {
-            if (memoria.estado.queimado[candidato]) {
+        if (dados.gatilhos_iniciados) {
+            guardar_nova_pontuacao(
+                dados,
+                cromossomo,
+                static_cast<int>(vizinho));
+        }
+    }
+}
+
+void queimar_e_atualizar_gatilhos(
+    MemoriaAuxiliar& dados,
+    const Graph& grafo,
+    const std::vector<double>& cromossomo,
+    int vertice) {
+
+    // Antes do primeiro reparo nao ha motivo para manter os gatilhos. Nesse
+    // trecho usamos a simulacao comum, que e mais barata.
+    if (!dados.gatilhos_iniciados) {
+        queimar_vertice(
+            grafo,
+            vertice,
+            dados.estado,
+            &dados.vertices_com_um_queimado);
+        return;
+    }
+
+    if (dados.estado.queimado[vertice]) {
+        return;
+    }
+
+    dados.estado.queimado[vertice] = 1;
+
+    // Se o proprio vertice era um gatilho, ele deixa de contribuir ao queimar.
+    if (dados.estado.quantidade_vizinhos_queimados[vertice] == 1) {
+        alterar_gatilhos_criados_por(
+            dados,
+            grafo,
+            cromossomo,
+            vertice,
+            -1);
+    }
+
+    dados.estado.total_queimados++;
+    dados.quantidade_gatilhos[vertice] = 0;
+
+    for (size_t vizinho : grafo.getNeighbors(vertice)) {
+        if (dados.estado.queimado[vizinho]) {
+            continue;
+        }
+
+        int quantidade_anterior =
+            dados.estado.quantidade_vizinhos_queimados[vizinho];
+        dados.estado.quantidade_vizinhos_queimados[vizinho]++;
+
+        if (quantidade_anterior == 0) {
+            // O vizinho passou a ter exatamente um queimado ao lado.
+            dados.vertices_com_um_queimado.push_back(
+                static_cast<int>(vizinho));
+            alterar_gatilhos_criados_por(
+                dados,
+                grafo,
+                cromossomo,
+                static_cast<int>(vizinho),
+                1);
+        } else if (quantidade_anterior == 1) {
+            // Com dois vizinhos queimados, ele deixa de ser gatilho e entra
+            // na fila de propagacao da proxima rodada.
+            alterar_gatilhos_criados_por(
+                dados,
+                grafo,
+                cromossomo,
+                static_cast<int>(vizinho),
+                -1);
+            dados.estado.fila_propagacao_seguinte.push_back(
+                static_cast<int>(vizinho));
+        }
+    }
+}
+
+void propagar_e_atualizar_gatilhos(
+    MemoriaAuxiliar& dados,
+    const Graph& grafo,
+    const std::vector<double>& cromossomo) {
+
+    for (int vertice : dados.estado.fila_propagacao_atual) {
+        queimar_e_atualizar_gatilhos(
+            dados,
+            grafo,
+            cromossomo,
+            vertice);
+    }
+
+    dados.estado.fila_propagacao_atual.clear();
+}
+
+void iniciar_gatilhos(
+    MemoriaAuxiliar& dados,
+    const Graph& grafo,
+    const std::vector<double>& cromossomo) {
+
+    std::fill(
+        dados.quantidade_gatilhos.begin(),
+        dados.quantidade_gatilhos.end(),
+        0);
+    dados.melhores_gatilhos.clear();
+
+    // Constroi os valores uma unica vez com base no estado atual da queima.
+    for (size_t vertice = 0; vertice < grafo.getOrder(); ++vertice) {
+        if (!dados.estado.queimado[vertice] &&
+            dados.estado.quantidade_vizinhos_queimados[vertice] == 1) {
+            alterar_gatilhos_criados_por(
+                dados,
+                grafo,
+                cromossomo,
+                static_cast<int>(vertice),
+                1);
+        }
+    }
+
+    // Durante a construcao acima nao inserimos cada mudanca separadamente na
+    // fila. Agora colocamos somente a pontuacao final de cada candidato.
+    for (size_t vertice = 0; vertice < grafo.getOrder(); ++vertice) {
+        if (!dados.estado.queimado[vertice] &&
+            dados.quantidade_gatilhos[vertice] > 0) {
+            int quantidade = dados.quantidade_gatilhos[vertice];
+            dados.melhores_gatilhos.push_back({
+                quantidade,
+                quantidade + cromossomo[vertice],
+                static_cast<int>(vertice)});
+        }
+    }
+
+    std::make_heap(
+        dados.melhores_gatilhos.begin(),
+        dados.melhores_gatilhos.end(),
+        menor_prioridade);
+
+    dados.gatilhos_iniciados = true;
+}
+
+int escolher_reparo_por_gatilho(
+    const Graph& grafo,
+    MemoriaAuxiliar& dados,
+    const std::vector<double>& cromossomo) {
+    if (!dados.gatilhos_iniciados) {
+        iniciar_gatilhos(dados, grafo, cromossomo);
+    }
+
+    // Descarta entradas antigas ate encontrar uma pontuacao que ainda
+    // corresponde ao estado atual.
+    while (!dados.melhores_gatilhos.empty()) {
+        const EntradaGatilho& melhor = dados.melhores_gatilhos.front();
+
+        bool entrada_valida =
+            !dados.estado.queimado[melhor.vertice] &&
+            melhor.quantidade ==
+                dados.quantidade_gatilhos[melhor.vertice];
+
+        if (entrada_valida) {
+            break;
+        }
+
+        // A quantidade mudou depois que esta entrada foi inserida.
+        std::pop_heap(
+            dados.melhores_gatilhos.begin(),
+            dados.melhores_gatilhos.end(),
+            menor_prioridade);
+        dados.melhores_gatilhos.pop_back();
+    }
+
+    if (dados.melhores_gatilhos.empty()) {
+        return -1;
+    }
+
+    double melhor_pontuacao =
+        dados.melhores_gatilhos.front().pontuacao;
+    std::vector<int>& empatados = dados.candidatos_empatados;
+    empatados.clear();
+
+    // Retira temporariamente todas as entradas validas com a melhor
+    // pontuacao. Normalmente existe apenas uma. Esse trecho tambem elimina
+    // copias antigas que tenham chegado ao topo da fila.
+    while (!dados.melhores_gatilhos.empty()) {
+        const EntradaGatilho& entrada =
+            dados.melhores_gatilhos.front();
+
+        bool entrada_valida =
+            !dados.estado.queimado[entrada.vertice] &&
+            entrada.quantidade ==
+                dados.quantidade_gatilhos[entrada.vertice];
+
+        if (!entrada_valida) {
+            std::pop_heap(
+                dados.melhores_gatilhos.begin(),
+                dados.melhores_gatilhos.end(),
+                menor_prioridade);
+            dados.melhores_gatilhos.pop_back();
+            continue;
+        }
+
+        if (entrada.pontuacao != melhor_pontuacao) {
+            break;
+        }
+
+        int vertice = entrada.vertice;
+        std::pop_heap(
+            dados.melhores_gatilhos.begin(),
+            dados.melhores_gatilhos.end(),
+            menor_prioridade);
+        dados.melhores_gatilhos.pop_back();
+
+        if (std::find(empatados.begin(), empatados.end(), vertice) ==
+            empatados.end()) {
+            empatados.push_back(vertice);
+        }
+    }
+
+    // Recoloca uma copia atual de cada candidato retirado.
+    for (int vertice : empatados) {
+        guardar_nova_pontuacao(dados, cromossomo, vertice);
+    }
+
+    if (empatados.size() == 1) {
+        return empatados.front();
+    }
+
+    // Em um empate exato, reproduz a ordem usada pela V4 anterior: primeiro
+    // o gatilho que entrou antes na fronteira e depois a ordem dos vizinhos.
+    for (int gatilho : dados.vertices_com_um_queimado) {
+        if (dados.estado.queimado[gatilho] ||
+            dados.estado.quantidade_vizinhos_queimados[gatilho] != 1) {
+            continue;
+        }
+
+        for (size_t candidato : grafo.getNeighbors(gatilho)) {
+            if (dados.estado.queimado[candidato]) {
                 continue;
             }
 
-            if (memoria.quantidade_gatilhos[candidato] == 0) {
-                memoria.candidatos_tocados.push_back(
-                    static_cast<int>(candidato));
+            double pontuacao =
+                dados.quantidade_gatilhos[candidato] +
+                cromossomo[candidato];
+
+            if (pontuacao == melhor_pontuacao) {
+                return static_cast<int>(candidato);
             }
-
-            memoria.quantidade_gatilhos[candidato]++;
         }
     }
 
-    memoria.vertices_com_um_queimado.swap(
-        memoria.fronteira_filtrada);
-
-    int escolhido = -1;
-    double melhor_pontuacao = -1.0;
-
-    for (int candidato : memoria.candidatos_tocados) {
-        double pontuacao = memoria.quantidade_gatilhos[candidato] +
-            cromossomo[candidato];
-
-        if (pontuacao > melhor_pontuacao) {
-            melhor_pontuacao = pontuacao;
-            escolhido = candidato;
-        }
-
-        memoria.quantidade_gatilhos[candidato] = 0;
-    }
-
-    return escolhido;
+    return empatados.front();
 }
 
 double simular(
@@ -117,7 +376,11 @@ double simular(
     std::vector<int>* sequencia_queima) {
 
     validar_cromossomo(grafo, cromossomo);
-    memoria.reiniciar(grafo, cromossomo);
+
+    // Guardar a referencia evita procurar a variavel thread_local em todas as
+    // operacoes internas da simulacao.
+    MemoriaAuxiliar& dados = memoria;
+    dados.reiniciar(grafo, cromossomo);
 
     if (sequencia_queima != nullptr) {
         sequencia_queima->clear();
@@ -128,26 +391,27 @@ double simular(
     size_t posicao_reparo = 0;
     int rodadas = 0;
 
-    while (!memoria.estado.todos_queimados()) {
+    while (!dados.estado.todos_queimados()) {
         rodadas++;
 
-        propagar_fogo(
+        propagar_e_atualizar_gatilhos(
+            dados,
             grafo,
-            memoria.estado,
-            &memoria.vertices_com_um_queimado);
+            cromossomo);
 
-        if (memoria.estado.todos_queimados()) {
+        if (dados.estado.todos_queimados()) {
             break;
         }
 
         int escolhido = proximo_vertice_nao_queimado(
-            memoria.fontes_do_cromossomo,
+            dados.fontes_do_cromossomo,
             posicao_cromossomo,
-            memoria.estado.queimado);
+            dados.estado.queimado);
 
         if (escolhido == -1) {
             escolhido = escolher_reparo_por_gatilho(
                 grafo,
+                dados,
                 cromossomo);
         }
 
@@ -155,26 +419,26 @@ double simular(
         // para que o reparo sempre produza uma solucao completa.
         if (escolhido == -1) {
             escolhido = proximo_vertice_nao_queimado(
-                memoria.ordem_para_reparo,
+                dados.ordem_para_reparo,
                 posicao_reparo,
-                memoria.estado.queimado);
+                dados.estado.queimado);
         }
 
         if (escolhido == -1) {
             break;
         }
 
-        queimar_vertice(
+        queimar_e_atualizar_gatilhos(
+            dados,
             grafo,
-            escolhido,
-            memoria.estado,
-            &memoria.vertices_com_um_queimado);
+            cromossomo,
+            escolhido);
 
         if (sequencia_queima != nullptr) {
             sequencia_queima->push_back(escolhido);
         }
 
-        terminar_rodada(memoria.estado);
+        terminar_rodada(dados.estado);
     }
 
     return rodadas;

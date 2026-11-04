@@ -1,0 +1,54 @@
+# Piloto rápido com parâmetros calibrados
+
+| Grafo | Vértices | Arestas | Versão | Configuração | Execuções | Válidas | Fitness médio | Melhor fitness | Desvio | Tempo médio (s) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| harwell_boeing__bcsstm13.txt | 649 | 9949 | V1 | anterior | 1 | 1 | 7.000 | 7 | 0.000 | 0.180891 |
+| harwell_boeing__bcsstm13.txt | 649 | 9949 | V2 | anterior | 1 | 1 | 7.000 | 7 | 0.000 | 0.251999 |
+| harwell_boeing__bcsstm13.txt | 649 | 9949 | V3 | anterior | 1 | 1 | 7.000 | 7 | 0.000 | 0.291326 |
+| harwell_boeing__bcsstm13.txt | 649 | 9949 | V4 | anterior | 1 | 1 | 7.000 | 7 | 0.000 | 0.290208 |
+| harwell_boeing__bcsstm13.txt | 649 | 9949 | V5 | anterior | 1 | 1 | 7.000 | 7 | 0.000 | 0.564045 |
+| harwell_boeing__fs_183_1.txt | 183 | 701 | V1 | anterior | 1 | 1 | 16.000 | 16 | 0.000 | 0.027133 |
+| harwell_boeing__fs_183_1.txt | 183 | 701 | V2 | anterior | 1 | 1 | 16.000 | 16 | 0.000 | 0.050024 |
+| harwell_boeing__fs_183_1.txt | 183 | 701 | V3 | anterior | 1 | 1 | 16.000 | 16 | 0.000 | 0.052024 |
+| harwell_boeing__fs_183_1.txt | 183 | 701 | V4 | anterior | 1 | 1 | 16.000 | 16 | 0.000 | 0.049172 |
+| harwell_boeing__fs_183_1.txt | 183 | 701 | V5 | anterior | 1 | 1 | 16.000 | 16 | 0.000 | 0.052820 |
+| harwell_boeing__jgl011.txt | 11 | 49 | V1 | anterior | 1 | 1 | 3.000 | 3 | 0.000 | 0.001124 |
+| harwell_boeing__jgl011.txt | 11 | 49 | V2 | anterior | 1 | 1 | 3.000 | 3 | 0.000 | 0.079803 |
+| harwell_boeing__jgl011.txt | 11 | 49 | V3 | anterior | 1 | 1 | 3.000 | 3 | 0.000 | 0.002313 |
+| harwell_boeing__jgl011.txt | 11 | 49 | V4 | anterior | 1 | 1 | 3.000 | 3 | 0.000 | 0.002805 |
+| harwell_boeing__jgl011.txt | 11 | 49 | V5 | anterior | 1 | 1 | 3.000 | 3 | 0.000 | 0.008885 |
+| harwell_boeing__lshp2614.txt | 2614 | 7683 | V1 | anterior | 1 | 1 | 38.000 | 38 | 0.000 | 0.580125 |
+| harwell_boeing__lshp2614.txt | 2614 | 7683 | V2 | anterior | 1 | 1 | 39.000 | 39 | 0.000 | 0.803962 |
+| harwell_boeing__lshp2614.txt | 2614 | 7683 | V3 | anterior | 1 | 1 | 37.000 | 37 | 0.000 | 1.217740 |
+| harwell_boeing__lshp2614.txt | 2614 | 7683 | V4 | anterior | 1 | 1 | 39.000 | 39 | 0.000 | 1.150030 |
+| harwell_boeing__lshp2614.txt | 2614 | 7683 | V5 | anterior | 1 | 1 | 37.000 | 37 | 0.000 | 1.670780 |
+| random__gilbert_n4000_d24_r1.txt | 4000 | 51971 | V1 | anterior | 1 | 1 | 9.000 | 9 | 0.000 | 2.030340 |
+| random__gilbert_n4000_d24_r1.txt | 4000 | 51971 | V2 | anterior | 1 | 1 | 10.000 | 10 | 0.000 | 1.993650 |
+| random__gilbert_n4000_d24_r1.txt | 4000 | 51971 | V3 | anterior | 1 | 1 | 10.000 | 10 | 0.000 | 2.041400 |
+| random__gilbert_n4000_d24_r1.txt | 4000 | 51971 | V4 | anterior | 1 | 1 | 10.000 | 10 | 0.000 | 2.073690 |
+| random__gilbert_n4000_d24_r1.txt | 4000 | 51971 | V5 | anterior | 1 | 1 | 10.000 | 10 | 0.000 | 3.731540 |
+| harwell_boeing__bcsstm13.txt | 649 | 9949 | V1 | calibrada | 1 | 1 | 6.000 | 6 | 0.000 | 29.034400 |
+| harwell_boeing__bcsstm13.txt | 649 | 9949 | V2 | calibrada | 1 | 1 | 7.000 | 7 | 0.000 | 22.381900 |
+| harwell_boeing__bcsstm13.txt | 649 | 9949 | V3 | calibrada | 1 | 1 | 6.000 | 6 | 0.000 | 11.910300 |
+| harwell_boeing__bcsstm13.txt | 649 | 9949 | V4 | calibrada | 1 | 1 | 7.000 | 7 | 0.000 | 16.747600 |
+| harwell_boeing__bcsstm13.txt | 649 | 9949 | V5 | calibrada | 1 | 1 | 7.000 | 7 | 0.000 | 58.523800 |
+| harwell_boeing__fs_183_1.txt | 183 | 701 | V1 | calibrada | 1 | 1 | 15.000 | 15 | 0.000 | 6.416950 |
+| harwell_boeing__fs_183_1.txt | 183 | 701 | V2 | calibrada | 1 | 1 | 15.000 | 15 | 0.000 | 4.946870 |
+| harwell_boeing__fs_183_1.txt | 183 | 701 | V3 | calibrada | 1 | 1 | 15.000 | 15 | 0.000 | 1.164320 |
+| harwell_boeing__fs_183_1.txt | 183 | 701 | V4 | calibrada | 1 | 1 | 15.000 | 15 | 0.000 | 2.978960 |
+| harwell_boeing__fs_183_1.txt | 183 | 701 | V5 | calibrada | 1 | 1 | 15.000 | 15 | 0.000 | 7.468600 |
+| harwell_boeing__jgl011.txt | 11 | 49 | V1 | calibrada | 1 | 1 | 3.000 | 3 | 0.000 | 1.860600 |
+| harwell_boeing__jgl011.txt | 11 | 49 | V2 | calibrada | 1 | 1 | 3.000 | 3 | 0.000 | 0.281170 |
+| harwell_boeing__jgl011.txt | 11 | 49 | V3 | calibrada | 1 | 1 | 3.000 | 3 | 0.000 | 0.078106 |
+| harwell_boeing__jgl011.txt | 11 | 49 | V4 | calibrada | 1 | 1 | 3.000 | 3 | 0.000 | 0.226701 |
+| harwell_boeing__jgl011.txt | 11 | 49 | V5 | calibrada | 1 | 1 | 3.000 | 3 | 0.000 | 0.494633 |
+| harwell_boeing__lshp2614.txt | 2614 | 7683 | V1 | calibrada | 1 | 1 | 32.000 | 32 | 0.000 | 74.105600 |
+| harwell_boeing__lshp2614.txt | 2614 | 7683 | V2 | calibrada | 1 | 1 | 31.000 | 31 | 0.000 | 66.439200 |
+| harwell_boeing__lshp2614.txt | 2614 | 7683 | V3 | calibrada | 1 | 1 | 31.000 | 31 | 0.000 | 30.788700 |
+| harwell_boeing__lshp2614.txt | 2614 | 7683 | V4 | calibrada | 1 | 1 | 33.000 | 33 | 0.000 | 54.079100 |
+| harwell_boeing__lshp2614.txt | 2614 | 7683 | V5 | calibrada | 1 | 1 | 31.000 | 31 | 0.000 | 132.421000 |
+| random__gilbert_n4000_d24_r1.txt | 4000 | 51971 | V1 | calibrada | 1 | 1 | 9.000 | 9 | 0.000 | 167.856000 |
+| random__gilbert_n4000_d24_r1.txt | 4000 | 51971 | V2 | calibrada | 1 | 1 | 9.000 | 9 | 0.000 | 135.186000 |
+| random__gilbert_n4000_d24_r1.txt | 4000 | 51971 | V3 | calibrada | 1 | 1 | 9.000 | 9 | 0.000 | 48.517800 |
+| random__gilbert_n4000_d24_r1.txt | 4000 | 51971 | V4 | calibrada | 1 | 1 | 9.000 | 9 | 0.000 | 134.625000 |
+| random__gilbert_n4000_d24_r1.txt | 4000 | 51971 | V5 | calibrada | 1 | 1 | 9.000 | 9 | 0.000 | 436.943000 |

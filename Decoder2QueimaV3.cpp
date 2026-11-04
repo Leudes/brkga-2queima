@@ -9,6 +9,7 @@ struct MemoriaAuxiliar {
     std::vector<int> grau_relativo;
     std::vector<int> vertices_nao_queimados;
     std::vector<int> posicao_na_lista;
+    bool reparo_iniciado = false;
 
     void reiniciar(
         const Graph& grafo,
@@ -24,18 +25,10 @@ struct MemoriaAuxiliar {
             true);
 
         grau_relativo.resize(numero_vertices);
-        vertices_nao_queimados.resize(numero_vertices);
+        vertices_nao_queimados.clear();
+        vertices_nao_queimados.reserve(numero_vertices);
         posicao_na_lista.resize(numero_vertices);
-
-        for (size_t vertice = 0;
-             vertice < numero_vertices;
-             vertice++) {
-            grau_relativo[vertice] = static_cast<int>(
-                grafo.getVertexDegree(vertice));
-            vertices_nao_queimados[vertice] =
-                static_cast<int>(vertice);
-            posicao_na_lista[vertice] = static_cast<int>(vertice);
-        }
+        reparo_iniciado = false;
     }
 
     // Remove em O(1), colocando o último elemento na posição liberada.
@@ -55,53 +48,87 @@ struct MemoriaAuxiliar {
 thread_local MemoriaAuxiliar memoria;
 
 void queimar_e_atualizar_grau(
+    MemoriaAuxiliar& dados,
     const Graph& grafo,
     int vertice) {
 
-    if (memoria.estado.queimado[vertice]) {
+    if (dados.estado.queimado[vertice]) {
         return;
     }
 
-    memoria.estado.queimado[vertice] = 1;
-    memoria.estado.total_queimados++;
-    memoria.grau_relativo[vertice] = 0;
-    memoria.remover_dos_nao_queimados(vertice);
+    dados.estado.queimado[vertice] = 1;
+    dados.estado.total_queimados++;
+    if (dados.reparo_iniciado) {
+        dados.grau_relativo[vertice] = 0;
+        dados.remover_dos_nao_queimados(vertice);
+    }
 
     for (size_t vizinho : grafo.getNeighbors(vertice)) {
-        if (memoria.estado.queimado[vizinho]) {
+        if (dados.estado.queimado[vizinho]) {
             continue;
         }
 
-        memoria.grau_relativo[vizinho]--;
-        memoria.estado.quantidade_vizinhos_queimados[vizinho]++;
+        if (dados.reparo_iniciado) {
+            dados.grau_relativo[vizinho]--;
+        }
+        dados.estado.quantidade_vizinhos_queimados[vizinho]++;
 
-        if (memoria.estado.quantidade_vizinhos_queimados[vizinho] == 2) {
-            memoria.estado.fila_propagacao_seguinte.push_back(
+        if (dados.estado.quantidade_vizinhos_queimados[vizinho] == 2) {
+            dados.estado.fila_propagacao_seguinte.push_back(
                 static_cast<int>(vizinho));
         }
     }
 }
 
-void propagar_e_atualizar_grau(const Graph& grafo) {
-    for (int vertice : memoria.estado.fila_propagacao_atual) {
-        queimar_e_atualizar_grau(grafo, vertice);
+void propagar_e_atualizar_grau(
+    MemoriaAuxiliar& dados,
+    const Graph& grafo) {
+    for (int vertice : dados.estado.fila_propagacao_atual) {
+        queimar_e_atualizar_grau(dados, grafo, vertice);
     }
 
-    memoria.estado.fila_propagacao_atual.clear();
+    dados.estado.fila_propagacao_atual.clear();
 }
 
 int escolher_reparo_por_grau_relativo(
+    const Graph& grafo,
+    MemoriaAuxiliar& dados,
     const std::vector<double>& cromossomo) {
+
+    if (!dados.reparo_iniciado) {
+        dados.vertices_nao_queimados.clear();
+        std::fill(
+            dados.posicao_na_lista.begin(),
+            dados.posicao_na_lista.end(),
+            -1);
+
+        for (size_t vertice = 0; vertice < grafo.getOrder(); ++vertice) {
+            if (dados.estado.queimado[vertice]) {
+                dados.grau_relativo[vertice] = 0;
+                continue;
+            }
+
+            dados.posicao_na_lista[vertice] = static_cast<int>(
+                dados.vertices_nao_queimados.size());
+            dados.vertices_nao_queimados.push_back(
+                static_cast<int>(vertice));
+            dados.grau_relativo[vertice] = static_cast<int>(
+                grafo.getVertexDegree(vertice)) -
+                dados.estado.quantidade_vizinhos_queimados[vertice];
+        }
+
+        dados.reparo_iniciado = true;
+    }
 
     int escolhido = -1;
 
-    for (int candidato : memoria.vertices_nao_queimados) {
+    for (int candidato : dados.vertices_nao_queimados) {
 
         if (escolhido == -1 ||
-            memoria.grau_relativo[candidato] >
-                memoria.grau_relativo[escolhido] ||
-            (memoria.grau_relativo[candidato] ==
-                 memoria.grau_relativo[escolhido] &&
+            dados.grau_relativo[candidato] >
+                dados.grau_relativo[escolhido] ||
+            (dados.grau_relativo[candidato] ==
+                 dados.grau_relativo[escolhido] &&
              cromossomo[candidato] > cromossomo[escolhido])) {
             escolhido = candidato;
         }
@@ -116,7 +143,8 @@ double simular(
     std::vector<int>* sequencia_queima) {
 
     validar_cromossomo(grafo, cromossomo);
-    memoria.reiniciar(grafo, cromossomo);
+    MemoriaAuxiliar& dados = memoria;
+    dados.reiniciar(grafo, cromossomo);
 
     if (sequencia_queima != nullptr) {
         sequencia_queima->clear();
@@ -126,35 +154,36 @@ double simular(
     size_t proxima_posicao = 0;
     int rodadas = 0;
 
-    while (!memoria.estado.todos_queimados()) {
+    while (!dados.estado.todos_queimados()) {
         rodadas++;
 
-        propagar_e_atualizar_grau(grafo);
+        propagar_e_atualizar_grau(dados, grafo);
 
-        if (memoria.estado.todos_queimados()) {
+        if (dados.estado.todos_queimados()) {
             break;
         }
 
         int escolhido = proximo_vertice_nao_queimado(
-            memoria.ordem_cromossomo,
+            dados.ordem_cromossomo,
             proxima_posicao,
-            memoria.estado.queimado);
+            dados.estado.queimado);
 
         if (escolhido == -1) {
-            escolhido = escolher_reparo_por_grau_relativo(cromossomo);
+            escolhido = escolher_reparo_por_grau_relativo(
+                grafo, dados, cromossomo);
         }
 
         if (escolhido == -1) {
             break;
         }
 
-        queimar_e_atualizar_grau(grafo, escolhido);
+        queimar_e_atualizar_grau(dados, grafo, escolhido);
 
         if (sequencia_queima != nullptr) {
             sequencia_queima->push_back(escolhido);
         }
 
-        terminar_rodada(memoria.estado);
+        terminar_rodada(dados.estado);
     }
 
     return rodadas;

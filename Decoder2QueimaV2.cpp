@@ -8,7 +8,7 @@ namespace {
 
 struct MemoriaAuxiliar {
     EstadoQueima estado;
-    std::vector<int> ordem_cromossomo;
+    std::vector<int> fila_cromossomo;
 };
 
 // Cada thread possui sua própria memória para que as avaliações paralelas do
@@ -43,8 +43,8 @@ double simular(
     validar_cromossomo(grafo, cromossomo);
     memoria.estado.reiniciar(grafo.getOrder());
 
-    preparar_ordem_do_cromossomo(
-        memoria.ordem_cromossomo,
+    preparar_fila_do_cromossomo(
+        memoria.fila_cromossomo,
         cromossomo,
         grafo.getOrder(),
         true);
@@ -54,7 +54,6 @@ double simular(
         sequencia_queima->reserve(grafo.getOrder());
     }
 
-    size_t posicao_cromossomo = 0;
     size_t posicao_reparo = 0;
     int rodadas = 0;
 
@@ -66,9 +65,9 @@ double simular(
             break;
         }
 
-        int escolhido = proximo_vertice_nao_queimado(
-            memoria.ordem_cromossomo,
-            posicao_cromossomo,
+        int escolhido = proximo_vertice_da_fila(
+            memoria.fila_cromossomo,
+            cromossomo,
             memoria.estado.queimado);
 
         if (escolhido == -1) {

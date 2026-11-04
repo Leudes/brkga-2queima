@@ -27,7 +27,8 @@ public:
     [[nodiscard]] size_t getVertexDegree(size_t vertex) const;
     [[nodiscard]] size_t getMinDegree() const;
     [[nodiscard]] size_t getMaxDegree() const;
-    [[nodiscard]] const std::vector<size_t>& getNeighbors(size_t vertex) const;
+    [[nodiscard]] const std::vector<size_t>& getNeighbors(
+        size_t vertex) const noexcept;
     
     [[nodiscard]] bool edgeExists(size_t u, size_t v) const;
     [[nodiscard]] bool vertexExists(size_t vertex) const;	

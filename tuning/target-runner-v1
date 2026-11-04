@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+if [ "$#" -lt 4 ]; then
+    echo "Uso: $0 ID_CONFIG ID_INSTANCIA SEMENTE INSTANCIA [PARAMETROS]" >&2
+    exit 1
+fi
+
+semente="$3"
+instancia="$4"
+shift 4
+
+diretorio_tuning="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+executavel="${diretorio_tuning}/../2queima"
+
+if [ ! -x "${executavel}" ]; then
+    echo "Erro: compile primeiro o executavel ${executavel}" >&2
+    exit 1
+fi
+
+exec "${executavel}" "${instancia}" "$@" \
+    --K 2 \
+    --MAXT 4 \
+    --X_NUMBER 2 \
+    --trials 1 \
+    --seed "${semente}" \
+    --irace

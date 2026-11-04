@@ -1,0 +1,10 @@
+parameterFile = "./parameters.txt"
+execDir = "."
+trainInstancesDir = "../graph_dataset/splits/irace"
+targetRunner = "./target-runner-v5"
+logFile = "./irace-v5.Rdata"
+
+# O orcamento podera ser aumentado depois da corrida de verificacao.
+maxExperiments = 1000
+parallel = 1
+seed = 20260913

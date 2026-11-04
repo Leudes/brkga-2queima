@@ -21,6 +21,8 @@ VERSIONS = {
     "V2_grau_estatico": ROOT / "2queimaV2",
     "V3_reparo_grau_relativo": ROOT / "2queimaV3",
     "V4_reparo_gatilho": ROOT / "2queimaV4",
+    "V5_reparo_combinado": ROOT / "2queimaV5",
+    "V6_permutacao_pura": ROOT / "2queimaV6",
 }
 
 DEFAULT_VERSIONS = [
@@ -28,19 +30,23 @@ DEFAULT_VERSIONS = [
     "V2_grau_estatico",
     "V3_reparo_grau_relativo",
     "V4_reparo_gatilho",
+    "V5_reparo_combinado",
+    "V6_permutacao_pura",
 ]
 
+PASTA_BASE_FINAL = ROOT / "graph_dataset/splits/final"
+
 INSTANCES = [
-    ROOT / "benchmark/base01/cycle1-order25.txt",
-    ROOT / "instancias/random_denso_n50_p30.txt",
-    ROOT / "benchmark/base01/steam3.txt",
-    ROOT / "benchmark/base01/cubic_100.txt",
-    ROOT / "instancias/grade_10x10.txt",
-    ROOT / "instancias/ciclo_n100.txt",
-    ROOT / "benchmark/base01/dwt__162.txt",
-    ROOT / "instancias/random_esparso_n200_d3.txt",
-    ROOT / "benchmark/base01/cycle10-order250.txt",
-    ROOT / "benchmark/base01/nos7.txt",
+    PASTA_BASE_FINAL / "dimacs10__karate.txt",
+    PASTA_BASE_FINAL / "harwell_boeing__steam3.txt",
+    PASTA_BASE_FINAL / "random__gilbert_n200_d3_r1.txt",
+    PASTA_BASE_FINAL / "harwell_boeing__mbeaflw.txt",
+    PASTA_BASE_FINAL / "snap__as19990101.txt",
+    PASTA_BASE_FINAL / "random__gilbert_n1000_d12_r1.txt",
+    PASTA_BASE_FINAL / "harwell_boeing__lshp1270.txt",
+    PASTA_BASE_FINAL / "random__gilbert_n2000_d24_r2.txt",
+    PASTA_BASE_FINAL / "harwell_boeing__cegb3024.txt",
+    PASTA_BASE_FINAL / "snap__as19980824.txt",
 ]
 
 COMMON_PARAMETERS = {
@@ -54,6 +60,47 @@ COMMON_PARAMETERS = {
     "X_NUMBER": "1",
     "MAX_GENS": "60",
     "MAX_STAGT": "30",
+}
+
+# Parametros encontrados pelo irace. A V6 ainda nao possui calibracao
+# propria e, por isso, usa provisoriamente a configuracao da V2.
+CALIBRATED_PARAMETERS = {
+    "V1_cromossomo": {
+        "p": "578", "pe": "0.2788", "pm": "0.0743",
+        "rhoe": "0.6237", "K": "2", "MAXT": "4",
+        "X_INTVL": "125", "X_NUMBER": "2",
+        "MAX_GENS": "583", "MAX_STAGT": "477",
+    },
+    "V2_grau_estatico": {
+        "p": "518", "pe": "0.2463", "pm": "0.2171",
+        "rhoe": "0.6522", "K": "2", "MAXT": "4",
+        "X_INTVL": "91", "X_NUMBER": "2",
+        "MAX_GENS": "651", "MAX_STAGT": "451",
+    },
+    "V3_reparo_grau_relativo": {
+        "p": "572", "pe": "0.2485", "pm": "0.1638",
+        "rhoe": "0.6334", "K": "2", "MAXT": "4",
+        "X_INTVL": "86", "X_NUMBER": "2",
+        "MAX_GENS": "344", "MAX_STAGT": "102",
+    },
+    "V4_reparo_gatilho": {
+        "p": "407", "pe": "0.2899", "pm": "0.0692",
+        "rhoe": "0.6514", "K": "2", "MAXT": "4",
+        "X_INTVL": "137", "X_NUMBER": "2",
+        "MAX_GENS": "762", "MAX_STAGT": "411",
+    },
+    "V5_reparo_combinado": {
+        "p": "554", "pe": "0.2689", "pm": "0.2702",
+        "rhoe": "0.6252", "K": "2", "MAXT": "4",
+        "X_INTVL": "37", "X_NUMBER": "2",
+        "MAX_GENS": "652", "MAX_STAGT": "486",
+    },
+    "V6_permutacao_pura": {
+        "p": "518", "pe": "0.2463", "pm": "0.2171",
+        "rhoe": "0.6522", "K": "2", "MAXT": "4",
+        "X_INTVL": "91", "X_NUMBER": "2",
+        "MAX_GENS": "651", "MAX_STAGT": "451",
+    },
 }
 
 
@@ -155,7 +202,7 @@ def parse_program_output(path: Path) -> list[tuple[int, float, list[int]]]:
 def run_benchmark(
     trials: int,
     output_dir: Path,
-    parameters: dict[str, str],
+    parameters_by_version: dict[str, dict[str, str]],
     file_prefix: str,
     versions: dict[str, Path],
 ) -> list[dict[str, object]]:
@@ -173,6 +220,7 @@ def run_benchmark(
         total = len(versions) * len(INSTANCES)
         completed = 0
         for version, executable in versions.items():
+            parameters = parameters_by_version[version]
             for instance in INSTANCES:
                 result_file = temporary / f"{version}__{instance.stem}.csv"
                 command = [str(executable), str(instance)]
@@ -207,7 +255,11 @@ def run_benchmark(
     output_dir.mkdir(parents=True, exist_ok=True)
     raw_path = output_dir / f"{file_prefix}_raw.csv"
     with raw_path.open("w", encoding="utf-8", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=raw_rows[0].keys())
+        writer = csv.DictWriter(
+            stream,
+            fieldnames=raw_rows[0].keys(),
+            lineterminator="\n",
+        )
         writer.writeheader()
         writer.writerows(raw_rows)
     return raw_rows
@@ -217,7 +269,7 @@ def summarize(
     rows: list[dict[str, object]],
     output_dir: Path,
     trials: int,
-    parameters: dict[str, str],
+    parameters_by_version: dict[str, dict[str, str]],
     file_prefix: str,
     versions: dict[str, Path],
 ) -> None:
@@ -243,7 +295,11 @@ def summarize(
 
     summary_path = output_dir / f"{file_prefix}_summary.csv"
     with summary_path.open("w", encoding="utf-8", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=summary_rows[0].keys())
+        writer = csv.DictWriter(
+            stream,
+            fieldnames=summary_rows[0].keys(),
+            lineterminator="\n",
+        )
         writer.writeheader()
         writer.writerows(summary_rows)
 
@@ -284,21 +340,23 @@ def summarize(
     (output_dir / f"{file_prefix}_aggregate.json").write_text(
         json.dumps({
             "trials_per_instance": trials,
-            "parameters": parameters,
+            "parameters_by_version": parameters_by_version,
             "aggregate": aggregates,
         }, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
 
+    distinct_parameters = {
+        tuple(parameters.items())
+        for parameters in parameters_by_version.values()
+    }
+    same_parameters = len(distinct_parameters) == 1
+
     report = [
         f"# Benchmark de {len(versions)} decodificadores",
         "",
         f"Foram executadas {trials} repetições por versão e instância, com sementes "
-        f"determinísticas de 0 a {trials - 1}. Todas as versões receberam os mesmos parâmetros.",
-        "",
-        "Parâmetros: " + ", ".join(
-            f"{nome}={valor}" for nome, valor in parameters.items()
-        ) + ".",
+        f"determinísticas de 0 a {trials - 1}.",
         "",
         "| Versão | Fitness médio | Gap médio | Tempo médio (ms) | Vitórias/empates |",
         "|---|---:|---:|---:|---:|",
@@ -309,6 +367,35 @@ def summarize(
             f"{row['mean_gap_to_best_percent']:.2f}% | "
             f"{row['time_ms_mean']:.3f} | {row['wins_or_ties']} |"
         )
+
+    if same_parameters:
+        parameters = next(iter(parameters_by_version.values()))
+        report[4:4] = [
+            "Todas as versões receberam os mesmos parâmetros: " + ", ".join(
+                f"{name}={value}" for name, value in parameters.items()
+            ) + ".",
+            "",
+        ]
+    else:
+        report.extend((
+            "",
+            "## Parâmetros calibrados",
+            "",
+            "| Versão | p | pe | pm | rhoe | K | MAXT | X_INTVL | X_NUMBER | MAX_GENS | MAX_STAGT |",
+            "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        ))
+        for version in versions:
+            parameters = parameters_by_version[version]
+            report.append(
+                f"| {version} | " + " | ".join(
+                    parameters[name]
+                    for name in (
+                        "p", "pe", "pm", "rhoe", "K", "MAXT",
+                        "X_INTVL", "X_NUMBER", "MAX_GENS", "MAX_STAGT",
+                    )
+                ) + " |"
+            )
+
     report.extend((
         "",
         "## Fitness médio por instância",
@@ -343,7 +430,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--trials", type=int, default=3)
     parser.add_argument(
-        "--output", type=Path, default=ROOT / "benchmark/results/quick_decoders"
+        "--output", type=Path, default=ROOT / "tests/resultados/quick_decoders"
     )
     parser.add_argument("--prefix", default="quick_decoders")
     parser.add_argument(
@@ -352,6 +439,11 @@ def main() -> None:
         choices=VERSIONS,
         default=DEFAULT_VERSIONS,
         help="versões que participarão do benchmark",
+    )
+    parser.add_argument(
+        "--calibrated",
+        action="store_true",
+        help="usa a configuracao calibrada pelo irace de cada versao",
     )
     parser.add_argument("--p", type=int, default=int(COMMON_PARAMETERS["p"]))
     parser.add_argument(
@@ -374,24 +466,34 @@ def main() -> None:
     if args.x_number < 0:
         raise SystemExit("--x-number não pode ser negativo")
 
-    parameters = COMMON_PARAMETERS.copy()
-    parameters.update({
-        "p": str(args.p),
-        "X_INTVL": str(args.x_intvl),
-        "X_NUMBER": str(args.x_number),
-        "MAX_GENS": str(args.max_gens),
-        "MAX_STAGT": str(args.max_stagt),
-    })
-
     selected_versions = {
         name: VERSIONS[name]
         for name in args.versions
     }
 
+    if args.calibrated:
+        parameters_by_version = {
+            name: CALIBRATED_PARAMETERS[name].copy()
+            for name in args.versions
+        }
+    else:
+        parameters = COMMON_PARAMETERS.copy()
+        parameters.update({
+            "p": str(args.p),
+            "X_INTVL": str(args.x_intvl),
+            "X_NUMBER": str(args.x_number),
+            "MAX_GENS": str(args.max_gens),
+            "MAX_STAGT": str(args.max_stagt),
+        })
+        parameters_by_version = {
+            name: parameters.copy()
+            for name in args.versions
+        }
+
     rows = run_benchmark(
         args.trials,
         args.output,
-        parameters,
+        parameters_by_version,
         args.prefix,
         selected_versions,
     )
@@ -399,7 +501,7 @@ def main() -> None:
         rows,
         args.output,
         args.trials,
-        parameters,
+        parameters_by_version,
         args.prefix,
         selected_versions,
     )

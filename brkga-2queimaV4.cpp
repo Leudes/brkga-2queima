@@ -11,8 +11,6 @@
 #include <vector>
 
 #define DEBUG 0
-#define IRACE 0
-
 struct AlgorithmParameters {
   std::string file_path;
   std::string output_file = "results4.csv";
@@ -29,6 +27,8 @@ struct AlgorithmParameters {
   unsigned MAX_GENS = 527;
   unsigned MAX_STAGT = 479;
   unsigned trials = 1;
+  unsigned long seed = 0;
+  bool irace = false;
 };
 
 struct Result {
@@ -48,9 +48,9 @@ void write_result_to_csv(const std::string &filename, const Result &result);
 int main(int argc, char *argv[]) {
   AlgorithmParameters parameters = parse_args(argc, argv);
 
-#if !IRACE
-  ensure_csv_header(parameters.output_file);
-#endif
+  if (!parameters.irace) {
+    ensure_csv_header(parameters.output_file);
+  }
 
   std::string filename(parameters.file_path);
   Graph g(filename);
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 
     Decodificador2Queima decodificador(g);
 
-    const long unsigned rngSeed = trial;
+    const unsigned long rngSeed = parameters.seed + trial;
     MTRand rng(rngSeed);
 
     BRKGA<Decodificador2Queima, MTRand> algorithm(
@@ -133,13 +133,12 @@ int main(int argc, char *argv[]) {
     std::cout << std::endl;
 #endif
 
-#if IRACE
-    std::cout << algorithm.getBestFitness();
-#endif
-
-#if !IRACE
-    write_result_to_csv(parameters.output_file, result);
-#endif
+    if (parameters.irace) {
+      // O irace precisa receber somente o custo da configuracao.
+      std::cout << result.fitness << '\n';
+    } else {
+      write_result_to_csv(parameters.output_file, result);
+    }
   }
 
 #if DEBUG
@@ -167,6 +166,8 @@ AlgorithmParameters parse_args(int argc, char *argv[]) {
               << "  --MAX_GENS VALUE\n"
               << "  --MAX_STAGT VALUE\n"
               << "  --trials VALUE\n"
+              << "  --seed VALUE\n"
+              << "  --irace\n"
               << "  --output FILE\n";
     exit(1);
   }
@@ -197,12 +198,21 @@ AlgorithmParameters parse_args(int argc, char *argv[]) {
       parameters.MAX_STAGT = std::stoul(argv[++i]);
     } else if (arg == "--trials" && i + 1 < argc) {
       parameters.trials = std::stoul(argv[++i]);
+    } else if (arg == "--seed" && i + 1 < argc) {
+      parameters.seed = std::stoul(argv[++i]);
+    } else if (arg == "--irace") {
+      parameters.irace = true;
     } else if (arg == "--output" && i + 1 < argc) {
       parameters.output_file = argv[++i];
     } else {
       std::cerr << "Unknown argument: " << arg << std::endl;
       exit(1);
     }
+  }
+
+  if (parameters.irace && parameters.trials != 1) {
+    std::cerr << "O modo --irace exige --trials 1" << std::endl;
+    exit(1);
   }
 
   return parameters;

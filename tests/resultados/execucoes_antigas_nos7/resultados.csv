@@ -1,0 +1,3 @@
+arquivo_origem,versao,instancia,vertices,arestas,densidade,repeticao,fitness,tempo_algoritmo_s
+results2.csv,não identificada,nos7.txt,729,1944,0.00732601,1,25.0,4.9725
+results2.csv,não identificada,nos7.txt,729,1944,0.00732601,2,25.0,4.93996
