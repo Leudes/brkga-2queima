@@ -1,5 +1,7 @@
 # Piloto rápido com parâmetros calibrados
 
+Compara uma configuração reduzida anterior com os parâmetros calibrados de V1 a V5 em cinco grafos representativos, com uma repetição.
+
 | Grafo | Vértices | Arestas | Versão | Configuração | Execuções | Válidas | Fitness médio | Melhor fitness | Desvio | Tempo médio (s) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | harwell_boeing__bcsstm13.txt | 649 | 9949 | V1 | anterior | 1 | 1 | 7.000 | 7 | 0.000 | 0.180891 |

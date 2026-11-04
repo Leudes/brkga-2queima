@@ -1,5 +1,7 @@
 # Resultados legados de results.csv
 
+Preserva execuções manuais antigas em diferentes estruturas de grafos; a versão e os parâmetros utilizados não estavam registrados no arquivo original.
+
 | Grafo | Vértices | Arestas | Versão | Execuções | Fitness médio | Melhor fitness | Desvio | Tempo médio (s) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | cubic_100.txt | 100 | 150 | não identificada | 4 | 29.000 | 29 | 0.000 | 1.945327 |

@@ -1,5 +1,7 @@
 # Comparação das versões V3, V4 e V5
 
+Compara grau relativo, gatilho e a combinação das duas heurísticas em 10 grafos, usando 30 repetições por versão e instância.
+
 | Grafo | Vértices | Arestas | Versão | Repetições | Fitness médio | Melhor fitness | Tempo médio (s) |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | cycle1-order25.txt | 25 | 25 | V3_reparo_grau_relativo | 30 | 14.000 | 14 | 0.042144 |

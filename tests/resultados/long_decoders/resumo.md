@@ -1,5 +1,7 @@
 # Comparação longa dos decoders
 
+Compara V1, V2, V3 e V4 em 10 grafos, com 30 repetições por combinação, usando parâmetros mais longos que o teste rápido.
+
 | Grafo | Vértices | Arestas | Versão | Execuções | Válidas | Fitness médio | Melhor fitness | Desvio | Tempo médio (s) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | ciclo_n100.txt | 100 | 100 | V1_cromossomo | 30 | 30 | 54.100 | 53 | 0.759 | 0.160793 |

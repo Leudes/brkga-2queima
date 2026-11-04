@@ -1,5 +1,7 @@
 # Decoders calibrados na base inicial
 
+Compara as seis versões do BRKGA, usando seus parâmetros calibrados, em 10 grafos da base inicial com 30 repetições por versão e instância.
+
 | Grafo | Vértices | Arestas | Versão | Execuções | Válidas | Fitness médio | Melhor fitness | Desvio | Tempo médio (s) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | ciclo_n100.txt | 100 | 100 | V1_cromossomo | 30 | 30 | 52.633 | 52 | 0.490 | 1.542176 |

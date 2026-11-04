@@ -1,5 +1,7 @@
 # Piloto rápido da V6
 
+Executa uma verificação curta da V6 de permutação pura em três grafos antes do piloto completo.
+
 | Grafo | Vértices | Arestas | Versão | Configuração | Execuções | Válidas | Fitness médio | Melhor fitness | Desvio | Tempo médio (s) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | harwell_boeing__bcsstm13.txt | 649 | 9949 | V6 | calibrada | 1 | 1 | 7.000 | 7 | 0.000 | 42.642600 |

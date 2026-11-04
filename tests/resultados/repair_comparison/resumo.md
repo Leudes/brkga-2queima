@@ -1,5 +1,7 @@
 # Comparação dos reparos
 
+Compara as versões originais e experimentais de V3 e V4 para medir o efeito de usar o cromossomo como fonte e as heurísticas apenas no reparo.
+
 | Grafo | Vértices | Arestas | Versão | Execuções | Válidas | Fitness médio | Melhor fitness | Desvio | Tempo médio (s) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | ciclo_n100.txt | 100 | 100 | V3_grau_relativo | 30 | 30 | 51.733 | 51 | 0.450 | 0.262393 |

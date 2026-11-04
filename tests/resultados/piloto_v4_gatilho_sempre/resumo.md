@@ -1,5 +1,7 @@
 # Piloto da V4 com gatilho sempre disponível
 
+Avalia a V4 final, que consulta o reparo por gatilho mesmo quando há propagação programada, nos mesmos 10 grafos e três repetições.
+
 | Grafo | Vértices | Arestas | Versão | Configuração | Execuções | Válidas | Fitness médio | Melhor fitness | Desvio | Tempo médio (s) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | harwell_boeing__gre_115.txt | 115 | 267 | V4 | calibrada | 3 | 3 | 10.000 | 10 | 0.000 | 1.251933 |

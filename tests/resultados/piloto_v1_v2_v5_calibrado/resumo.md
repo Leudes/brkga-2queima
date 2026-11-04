@@ -1,5 +1,7 @@
 # Piloto calibrado das versões V1, V2 e V5
 
+Avalia V1, V2 e V5 com seus parâmetros calibrados em 10 grafos representativos, usando três repetições por versão e instância.
+
 | Grafo | Vértices | Arestas | Versão | Configuração | Execuções | Válidas | Fitness médio | Melhor fitness | Desvio | Tempo médio (s) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | harwell_boeing__gre_115.txt | 115 | 267 | V1 | calibrada | 3 | 3 | 10.000 | 10 | 0.000 | 3.859603 |

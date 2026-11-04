@@ -1,5 +1,7 @@
 # Resultados legados de results_v2.csv
 
+Preserva execuções antigas da V2 em cinco grafos Delaunay de tamanhos crescentes, com uma execução por instância.
+
 | Grafo | Vértices | Arestas | Versão | Execuções | Fitness médio | Melhor fitness | Desvio | Tempo médio (s) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | delaunay_n10.txt | 1024 | 3056 | V2 | 1 | 20.000 | 20 | 0.000 | 76.910700 |

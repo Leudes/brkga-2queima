@@ -1,5 +1,7 @@
 # Estimativa pessimista de tempo
 
+Mede uma execução das seis versões nos grafos grandes `n4000_d24` e `psmigr_3` e projeta o tempo do experimento final completo.
+
 | Grafo | Vértices | Arestas | Versão | Fitness | Tempo (s) | Estado |
 |---|---:|---:|---:|---:|---:|---:|
 | random__gilbert_n4000_d24_r1.txt | 4000 | 51971 | V1_cromossomo | 9 | 102.481 | ok |

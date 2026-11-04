@@ -1,5 +1,7 @@
 # Resultados legados de results_v1.csv
 
+Reúne o teste antigo da V1 em 10 grafos, com 15 repetições por instância, após remover as linhas de sequência misturadas ao CSV original.
+
 | Grafo | Vértices | Arestas | Versão | Execuções | Fitness médio | Melhor fitness | Desvio | Tempo médio (s) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | caminho_n100.txt | 100 | 99 | V1 | 15 | 53.933 | 53 | 0.704 | 0.531032 |

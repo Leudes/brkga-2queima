@@ -1,5 +1,7 @@
 # Calibração do BRKGA com irace
 
+Registra o tempo da calibração e a melhor configuração encontrada pelo irace para cada versão de V1 a V5.
+
 | Versão | Tempo (s) | Avaliações | Iterações | ID | p | pe | pm | rhoe | MAX_GENS | MAX_STAGT | X_INTVL |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | V1 | 21513.568 | 999 | 6 | 118 | 578 | 0.2788 | 0.0743 | 0.6237 | 583 | 477 | 125 |

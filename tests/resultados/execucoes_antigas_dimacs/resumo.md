@@ -1,5 +1,7 @@
 # Resultados legados de results_dimacs.csv
 
+Preserva medições antigas em grafos Delaunay da coleção DIMACS; a versão do decoder não estava registrada no arquivo original.
+
 | Grafo | Vértices | Arestas | Versão | Execuções | Fitness médio | Melhor fitness | Desvio | Tempo médio (s) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | delaunay_n10.txt | 1024 | 3056 | não identificada | 2 | 20.000 | 20 | 0.000 | 78.326200 |

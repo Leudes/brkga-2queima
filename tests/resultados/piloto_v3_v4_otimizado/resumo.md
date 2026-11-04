@@ -1,5 +1,7 @@
 # Piloto otimizado das versões V3 e V4
 
+Avalia as implementações otimizadas de V3 e V4 com parâmetros calibrados em 10 grafos, usando três repetições por combinação.
+
 | Grafo | Vértices | Arestas | Versão | Configuração | Execuções | Válidas | Fitness médio | Melhor fitness | Desvio | Tempo médio (s) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | harwell_boeing__gre_115.txt | 115 | 267 | V3 | calibrada | 3 | 3 | 10.333 | 10 | 0.577 | 1.234767 |

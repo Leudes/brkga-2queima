@@ -1,5 +1,7 @@
 # Piloto completo da V6 com parâmetros provisórios
 
+Avalia a V6 de permutação pura em 10 grafos e três repetições, usando provisoriamente os parâmetros calibrados da V2.
+
 | Grafo | Vértices | Arestas | Versão | Configuração | Execuções | Válidas | Fitness médio | Melhor fitness | Desvio | Tempo médio (s) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | harwell_boeing__gre_115.txt | 115 | 267 | V6 | calibrada | 3 | 3 | 10.333 | 10 | 0.577 | 3.187610 |

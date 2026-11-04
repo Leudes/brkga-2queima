@@ -1,5 +1,7 @@
 # Piloto da V4 com gatilho condicional
 
+Avalia a V4 anterior, que só consultava o reparo por gatilho quando não havia propagação já programada, em 10 grafos e três repetições.
+
 | Grafo | Vértices | Arestas | Versão | Configuração | Execuções | Válidas | Fitness médio | Melhor fitness | Desvio | Tempo médio (s) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | harwell_boeing__gre_115.txt | 115 | 267 | V4 | calibrada | 3 | 3 | 10.000 | 10 | 0.000 | 3.101707 |

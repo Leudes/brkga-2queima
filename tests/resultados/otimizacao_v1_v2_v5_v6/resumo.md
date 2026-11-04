@@ -1,5 +1,7 @@
 # Otimização das versões V1, V2, V5 e V6
 
+Compara o tempo antes e depois das otimizações de código, verificando também se o fitness permaneceu idêntico.
+
 | Grafo | Vértices | Arestas | Versão | Repetições | Tempo anterior (s) | Tempo otimizado (s) | Redução (%) | Resultado idêntico |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | random__gilbert_n3000_d12_r1.txt | 3000 | 21034 | V1 | 3 | 0.663559 | 0.619849 | 6.6 | sim |
