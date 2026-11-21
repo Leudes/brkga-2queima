@@ -145,10 +145,13 @@ def montar_comando(
 
 def ler_resultado(caminho: Path) -> tuple[int, float]:
     with caminho.open(encoding="utf-8", newline="") as arquivo:
-        linhas = list(csv.reader(arquivo))
-    if len(linhas) < 2 or len(linhas[1]) != 6:
+        linhas = list(csv.DictReader(arquivo))
+    if len(linhas) != 1:
         raise RuntimeError(f"Saida inesperada em {caminho}")
-    return int(float(linhas[1][4])), float(linhas[1][5]) / 1_000_000.0
+    return (
+        int(float(linhas[0]["fitness_value"])),
+        float(linhas[0]["elapsed_time(microsecond)"]) / 1_000_000.0,
+    )
 
 
 def executar(

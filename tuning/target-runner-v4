@@ -18,6 +18,7 @@ if [ ! -x "${executavel}" ]; then
 fi
 
 exec "${executavel}" "${instancia}" "$@" \
+    --tempo 300 \
     --K 2 \
     --MAXT 4 \
     --X_NUMBER 2 \

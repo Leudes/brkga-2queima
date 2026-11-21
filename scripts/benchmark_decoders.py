@@ -180,22 +180,15 @@ def sequence_fitness(graph: Graph, sequence: list[int]) -> int:
 
 
 def parse_program_output(path: Path) -> list[tuple[int, float, list[int]]]:
-    lines = path.read_text(encoding="utf-8").splitlines()
     results: list[tuple[int, float, list[int]]] = []
-    index = 1
-    while index < len(lines):
-        fields = next(csv.reader([lines[index]]))
-        if len(fields) != 6:
-            raise ValueError(f"linha de resultado inesperada: {lines[index]}")
-        fitness = int(float(fields[4]))
-        elapsed_us = float(fields[5])
-        index += 1
-        if index >= len(lines) or not lines[index].startswith("sequence,"):
-            raise ValueError("sequencia ausente no resultado")
-        inside = lines[index].split("[", 1)[1].split("]", 1)[0]
-        sequence = [int(value) for value in inside.split()]
-        results.append((fitness, elapsed_us, sequence))
-        index += 1
+    with path.open(encoding="utf-8", newline="") as stream:
+        for row in csv.DictReader(stream):
+            sequence = [int(value) for value in row["sequence"].split()]
+            results.append((
+                int(float(row["fitness_value"])),
+                float(row["elapsed_time(microsecond)"]),
+                sequence,
+            ))
     return results
 
 
